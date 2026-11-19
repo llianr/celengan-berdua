@@ -185,15 +185,42 @@
 
       /* ---------- Contributors ---------- */
       .duo{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
-      .person{ border-radius:var(--radius); padding:16px 14px; border:2px solid; text-align:center; }
+      .person{ border-radius:var(--radius); padding:16px 14px; border:2px solid; text-align:center; position:relative; overflow:hidden; }
       .person.blue{ background:var(--blue-soft); border-color:#BFD9F7; }
       .person.pink{ background:var(--pink-soft); border-color:#F8C3DA; }
-      .person svg{ width:64px; height:64px; }
       .person .pname{ font-family:"Baloo 2",cursive; font-weight:700; font-size:1.12rem; margin-top:2px; }
       .person.blue .pname{ color:var(--blue-ink); }
       .person.pink .pname{ color:var(--pink-ink); }
       .person .ptotal{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.25rem; margin-top:2px; word-break:break-word; }
       .person .pshare{ font-weight:800; font-size:.82rem; color:var(--ink-soft); margin-top:1px; }
+
+      /* TOP SAVER perk (Opsi 3): golden throne + laurel + diagonal ribbon, leader only */
+      .person.leader{ border-color:#E7B93C; box-shadow:0 6px 14px rgba(217,148,30,.28), inset 0 0 0 2px rgba(246,196,83,.45); }
+      .ribbon{
+        position:absolute; top:15px; right:-44px; z-index:5; display:none;
+        transform:rotate(38deg); white-space:nowrap;
+        background:linear-gradient(90deg,#C0392B,#D94F30 45%,#E8A13A);
+        color:#fff; font-family:"Baloo 2",cursive; font-weight:800; font-size:.68rem; letter-spacing:1.6px;
+        padding:4px 46px; box-shadow:0 2px 5px rgba(120,40,10,.28);
+      }
+      .person.leader .ribbon{ display:block; }
+      .mascot-stage{ position:relative; width:104px; height:104px; margin:0 auto; }
+      .throne{ position:absolute; inset:0; width:100%; height:100%; display:none; z-index:0; }
+      .person.leader .throne{ display:block; }
+      .person .card-mascot{ position:absolute; left:16px; top:16px; width:72px; height:72px; z-index:2; animation:idleBob 2.6s ease-in-out infinite; }
+      .person.pink .card-mascot{ animation-delay:-1.3s; }
+      @keyframes idleBob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+      .sparkles{ position:absolute; inset:0; z-index:3; display:none; pointer-events:none; }
+      .person.leader .sparkles{ display:block; }
+      .sparkles i{ position:absolute; font-style:normal; color:#F0A92E; text-shadow:0 0 6px rgba(255,200,60,.85); animation:sparkleFloat 2.8s ease-in-out infinite; }
+      .sparkles .sp1{ left:0; top:4px; font-size:13px; }
+      .sparkles .sp2{ right:1px; top:30px; font-size:10px; animation-delay:.9s; }
+      .sparkles .sp3{ left:6px; bottom:8px; font-size:11px; animation-delay:1.7s; }
+      @keyframes sparkleFloat{ 0%,100%{ opacity:0; transform:translateY(2px) scale(.7) rotate(0deg) } 50%{ opacity:1; transform:translateY(-3px) scale(1) rotate(20deg) } }
+
+      /* Blinking eyes on every mascot (header, cards, sheets, history) */
+      #mascot .eye{ transform-box:fill-box; transform-origin:50% 50%; animation:blink 4.8s ease-in-out infinite; }
+      @keyframes blink{ 0%,93%,100%{ transform:scaleY(1) } 96%{ transform:scaleY(.08) } }
 
       /* ---------- Rincian Tujuan (breakdown) ---------- */
       .breakdown-title{ display:flex; align-items:center; gap:9px; }
@@ -336,8 +363,12 @@
       @media (prefers-reduced-motion: reduce){
         .bob,.bob2{ animation:none; }
         .bar-fill{ transition:none; }
+        .br-fill{ transition:none; }
         .sheet{ animation:none; }
         .milestone.show{ animation:none; }
+        .person .card-mascot{ animation:none; }
+        .sparkles i{ animation:none; }
+        #mascot .eye{ animation:none; }
       }
     </style>
   </head>
@@ -364,8 +395,8 @@
           </g>
           <circle cx="60" cy="28" r="6" fill="var(--ribbon,#EF6FA5)" stroke="rgba(0,0,0,.12)" stroke-width="1.5"/>
           <!-- face -->
-          <path d="M38 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
-          <path d="M70 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path class="eye" d="M38 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path class="eye" d="M70 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
           <path d="M53 76q7 6 14 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
           <circle cx="33" cy="74" r="6.5" fill="#FF9FB0" opacity=".85"/>
           <circle cx="87" cy="74" r="6.5" fill="#FF9FB0" opacity=".85"/>
@@ -462,14 +493,72 @@
       </div>
 
       <div class="duo">
-        <div class="person blue">
-          <svg style="--ribbon:#4A90D9" aria-hidden="true"><use href="#mascot"/></svg>
+        <div class="person blue" id="cardBlue">
+          <span class="ribbon" aria-hidden="true">TOP SAVER</span>
+          <div class="mascot-stage" aria-hidden="true">
+            <svg class="throne" viewBox="0 0 120 120">
+              <path d="M18 104 V46 Q18 14 60 14 Q102 14 102 46 V104 Z" fill="#F6C453" stroke="#D9941E" stroke-width="3"/>
+              <path d="M27 98 V48 Q27 23 60 23 Q93 23 93 48 V98 Z" fill="#FFD873"/>
+              <circle cx="18" cy="14" r="6" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <circle cx="102" cy="14" r="6" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <circle cx="60" cy="9" r="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <g>
+                <path d="M17 98 Q7 66 17 36" fill="none" stroke="#7C9A3C" stroke-width="2.5" stroke-linecap="round"/>
+                <ellipse cx="13" cy="88" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(-32 13 88)"/>
+                <ellipse cx="9.5" cy="73" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(-14 9.5 73)"/>
+                <ellipse cx="9.5" cy="57" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(6 9.5 57)"/>
+                <ellipse cx="13" cy="43" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(26 13 43)"/>
+              </g>
+              <g transform="translate(120,0) scale(-1,1)">
+                <path d="M17 98 Q7 66 17 36" fill="none" stroke="#7C9A3C" stroke-width="2.5" stroke-linecap="round"/>
+                <ellipse cx="13" cy="88" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(-32 13 88)"/>
+                <ellipse cx="9.5" cy="73" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(-14 9.5 73)"/>
+                <ellipse cx="9.5" cy="57" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(6 9.5 57)"/>
+                <ellipse cx="13" cy="43" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(26 13 43)"/>
+              </g>
+              <rect x="6" y="74" width="17" height="10" rx="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <rect x="97" y="74" width="17" height="10" rx="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <rect x="14" y="95" width="92" height="12" rx="6" fill="#D9534A" stroke="#B23A2E" stroke-width="2.5"/>
+              <rect x="20" y="107" width="80" height="6" rx="3" fill="#D9941E"/>
+            </svg>
+            <svg class="card-mascot" style="--ribbon:#4A90D9"><use href="#mascot"/></svg>
+            <span class="sparkles"><i class="sp1">✦</i><i class="sp2">✦</i><i class="sp3">✦</i></span>
+          </div>
           <div class="pname">syahrullian</div>
           <div class="ptotal" id="totalBlue">Rp 0</div>
           <div class="pshare" id="shareBlue">0% dari total</div>
         </div>
-        <div class="person pink">
-          <svg style="--ribbon:#EF6FA5" aria-hidden="true"><use href="#mascot"/></svg>
+        <div class="person pink" id="cardPink">
+          <span class="ribbon" aria-hidden="true">TOP SAVER</span>
+          <div class="mascot-stage" aria-hidden="true">
+            <svg class="throne" viewBox="0 0 120 120">
+              <path d="M18 104 V46 Q18 14 60 14 Q102 14 102 46 V104 Z" fill="#F6C453" stroke="#D9941E" stroke-width="3"/>
+              <path d="M27 98 V48 Q27 23 60 23 Q93 23 93 48 V98 Z" fill="#FFD873"/>
+              <circle cx="18" cy="14" r="6" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <circle cx="102" cy="14" r="6" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <circle cx="60" cy="9" r="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <g>
+                <path d="M17 98 Q7 66 17 36" fill="none" stroke="#7C9A3C" stroke-width="2.5" stroke-linecap="round"/>
+                <ellipse cx="13" cy="88" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(-32 13 88)"/>
+                <ellipse cx="9.5" cy="73" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(-14 9.5 73)"/>
+                <ellipse cx="9.5" cy="57" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(6 9.5 57)"/>
+                <ellipse cx="13" cy="43" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(26 13 43)"/>
+              </g>
+              <g transform="translate(120,0) scale(-1,1)">
+                <path d="M17 98 Q7 66 17 36" fill="none" stroke="#7C9A3C" stroke-width="2.5" stroke-linecap="round"/>
+                <ellipse cx="13" cy="88" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(-32 13 88)"/>
+                <ellipse cx="9.5" cy="73" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(-14 9.5 73)"/>
+                <ellipse cx="9.5" cy="57" rx="7" ry="3.4" fill="#8FAE3E" stroke="#7C9A3C" stroke-width="1" transform="rotate(6 9.5 57)"/>
+                <ellipse cx="13" cy="43" rx="7" ry="3.4" fill="#A8B545" stroke="#7C9A3C" stroke-width="1" transform="rotate(26 13 43)"/>
+              </g>
+              <rect x="6" y="74" width="17" height="10" rx="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <rect x="97" y="74" width="17" height="10" rx="5" fill="#F6C453" stroke="#D9941E" stroke-width="2.5"/>
+              <rect x="14" y="95" width="92" height="12" rx="6" fill="#D9534A" stroke="#B23A2E" stroke-width="2.5"/>
+              <rect x="20" y="107" width="80" height="6" rx="3" fill="#D9941E"/>
+            </svg>
+            <svg class="card-mascot" style="--ribbon:#EF6FA5"><use href="#mascot"/></svg>
+            <span class="sparkles"><i class="sp1">✦</i><i class="sp2">✦</i><i class="sp3">✦</i></span>
+          </div>
           <div class="pname">prisqola</div>
           <div class="ptotal" id="totalPink">Rp 0</div>
           <div class="pshare" id="sharePink">0% dari total</div>
@@ -970,6 +1059,11 @@
           $("totalPink").textContent = rp(allT.pink);
           $("shareBlue").textContent = (allT.all > 0 ? Math.round(allT.blue / allT.all * 100) : 0) + "% dari total gabungan";
           $("sharePink").textContent = (allT.all > 0 ? Math.round(allT.pink / allT.all * 100) : 0) + "% dari total gabungan";
+
+          // TOP SAVER perk: strictly higher combined total leads; tie or both zero -> neither
+          var leader = (allT.all > 0 && allT.blue !== allT.pink) ? (allT.blue > allT.pink ? "blue" : "pink") : null;
+          $("cardBlue").classList.toggle("leader", leader === "blue");
+          $("cardPink").classList.toggle("leader", leader === "pink");
 
           renderBreakdown();
           renderHistory();
