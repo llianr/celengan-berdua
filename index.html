@@ -367,6 +367,18 @@
       .sheet h2{ font-family:"Baloo 2",cursive; font-weight:800; margin:0 0 4px; font-size:1.5rem; color:var(--orange-deep); }
       .sheet .sub{ color:var(--ink-soft); font-weight:700; font-size:.88rem; margin:0 0 16px; }
       .who-toggle{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+      .tx-toggle{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:4px; }
+      .tx-opt{
+        border:3px solid var(--line); background:#fff; border-radius:18px; padding:11px 8px;
+        font-family:"Baloo 2",cursive; font-weight:800; font-size:1.02rem; color:var(--ink-soft); min-height:3.1rem;
+      }
+      .tx-opt.sel-in{ border-color:var(--orange); background:var(--orange-pale); color:var(--orange-deep); }
+      .tx-opt.sel-out{ border-color:#E87A72; background:#FFF1F0; color:var(--danger); }
+      .btn-save.out{ background:linear-gradient(180deg,#E87A72,#D9534A); box-shadow:0 4px 0 #A93A33; }
+      .btn-save.out:active{ box-shadow:0 1px 0 #A93A33; }
+      .row.out{ background:#FFF7F4; border-color:#F3CFC9; }
+      .row .amt.out{ color:var(--danger); }
+      .row .tx-ico{ font-size:.85rem; }
       .who-opt{
         border:3px solid var(--line); background:#fff; border-radius:18px; padding:10px 8px;
         display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -574,6 +586,7 @@
         <div class="total-label" id="totalLabel">TOTAL TERKUMPUL — SEMUA TUJUAN</div>
         <div class="total-big" id="totalBig">Rp 0</div>
         <div class="total-sub" id="totalSub">dari Rp 0 target gabungan</div>
+        <div class="total-sub" id="flowLine">Masuk Rp 0 • Keluar Rp 0</div>
       </div>
 
       <div class="card jar-zone">
@@ -698,7 +711,7 @@
       <p class="pot-note">Satu pot bersama untuk semua tujuan 🍊 — semua setoran ngisi pot yang sama, tiap tujuan dihitung dari pot itu.</p>
       <div class="breakdown-list" id="breakdownList"></div>
 
-      <h2 class="sec-title" id="histTitle">Riwayat Nabung 📒</h2>
+      <h2 class="sec-title" id="histTitle">Riwayat Transaksi 📒</h2>
       <div class="hist" id="histList"></div>
       <p class="loading-note" id="loadingNote">Lagi ngambil data celengan dari awan… ☁️</p>
 
@@ -718,8 +731,12 @@
     <div class="overlay" id="nabungOverlay" role="dialog" aria-modal="true" aria-labelledby="nabungTitle">
       <div class="sheet">
         <h2 id="nabungTitle">Nabung dulu yuk! 🍊</h2>
-        <p class="sub">Catat setoran yang baru masuk ke e-wallet kalian. Setorannya masuk ke pot bersama buat semua tujuan 🍊</p>
-        <label class="flabel">Siapa yang nabung?</label>
+        <p class="sub" id="nabungSub">Catat setoran yang baru masuk ke e-wallet kalian. Setorannya masuk ke pot bersama buat semua tujuan 🍊</p>
+        <div class="tx-toggle">
+          <button type="button" class="tx-opt sel-in" id="txIn">🍊 Nabung</button>
+          <button type="button" class="tx-opt" id="txOut">💸 Pengeluaran</button>
+        </div>
+        <label class="flabel" id="whoLabel">Siapa yang nabung?</label>
         <div class="who-toggle">
           <button type="button" class="who-opt sel-blue" id="whoBlue" data-who="syahrullian">
             <svg style="--ribbon:#4A90D9" aria-hidden="true"><use href="#mascot"/></svg>
@@ -743,6 +760,10 @@
         </div>
         <label class="flabel" for="noteInput">Catatan (boleh kosong)</label>
         <input type="text" id="noteInput" placeholder="mis. gajian, sisa jajan, THR…" maxlength="80" />
+        <div id="expenseGoalWrap" style="display:none">
+          <label class="flabel" for="expenseGoalSelect">Untuk tujuan</label>
+          <select class="dual-select" id="expenseGoalSelect"></select>
+        </div>
         <p class="form-err" id="nabungErr"></p>
         <div class="sheet-actions">
           <button type="button" class="btn-cancel" data-close="nabungOverlay">Batal</button>
@@ -852,6 +873,7 @@
           prevActiveId: null,
           loaded: false,
           who: "syahrullian",
+          txMode: "in",
           delId: null,
           migrating: false
         };
@@ -881,7 +903,7 @@
           var blue=0, pink=0;
           Object.keys(map).forEach(function(id){
             var e = map[id];
-            if (!e || typeof e.amount !== "number") return;
+            if (!e || typeof e.amount !== "number" || e.type === "out") return;
             if (e.who === "prisqola") pink += e.amount; else blue += e.amount;
           });
           return { blue: blue, pink: pink, all: blue+pink };
@@ -892,7 +914,7 @@
           var g = state.goals[gid];
           if (!g || !(g.target>0)) return null;
           var pot = totalsAll();
-          return Math.min(100, (pot.all / g.target) * 100);
+          return Math.max(0, Math.min(100, (pot.all / g.target) * 100));
         }
         function totalTargetAll(){
           var sum = 0;
@@ -906,7 +928,7 @@
           var tt = totalTargetAll();
           if (!(tt > 0)) return null;
           var allT = totalsAll();
-          return Math.min(100, (allT.all / tt) * 100);
+          return Math.max(0, Math.min(100, (allT.all / tt) * 100));
         }
 
         /* ---------- Toast ---------- */
@@ -967,14 +989,27 @@
         /* ---------- Rendering ---------- */
         function totals(){ return sumEntries(entriesForGoal(state.activeGoalId)); }
         function totalsAll(){
-          var blue=0, pink=0, all=0;
+          // Pot = SALDO: sum of all "in" minus sum of all "out". Entries
+          // without a type (all pre-existing data) count as "in".
+          // blue/pink stay each person's gross "in" contributions only —
+          // spending never reduces a saver total (TOP SAVER basis).
+          var blue=0, pink=0, totalIn=0, totalOut=0;
           Object.keys(state.entries).forEach(function(id){
             var e = state.entries[id];
             if (!e || typeof e.amount !== "number") return;
-            all += e.amount;
+            if (e.type === "out"){ totalOut += e.amount; return; }
+            totalIn += e.amount;
             if (e.who === "prisqola") pink += e.amount; else blue += e.amount;
           });
-          return { blue: blue, pink: pink, all: all };
+          return { blue: blue, pink: pink, totalIn: totalIn, totalOut: totalOut, all: totalIn - totalOut };
+        }
+        function spentForGoal(gid){
+          var sum = 0;
+          Object.keys(state.entries).forEach(function(id){
+            var e = state.entries[id];
+            if (e && e.type === "out" && e.goalId === gid && typeof e.amount === "number") sum += e.amount;
+          });
+          return sum;
         }
         function fmtPct(p){ return p===null ? "—" : (Math.round(p*10)/10).toString().replace(".", ",") + "%"; }
 
@@ -1067,6 +1102,8 @@
             sub.style.display = "block";
             if (hasTarget) sub.textContent = "Pot bersama " + rp(potAll) + " • target " + rp(g.target);
             else sub.textContent = "Pot bersama " + rp(potAll) + " • target belum diatur";
+            var spent = spentForGoal(gid);
+            if (spent > 0) sub.textContent += " • terpakai " + rp(spent);
             main.appendChild(sub);
 
             if (achieved){
@@ -1145,15 +1182,17 @@
           var allT = totalsAll();
           var combinedTarget = totalTargetAll();
           var hasCombinedTarget = combinedTarget > 0;
-          var cPct = hasCombinedTarget ? Math.min(100, (allT.all / combinedTarget) * 100) : null;
+          var cPct = hasCombinedTarget ? Math.max(0, Math.min(100, (allT.all / combinedTarget) * 100)) : null;
           var goalCount = Object.keys(state.goals).length || 1;
 
           renderGoalSwitcher();
-          $("histTitle").textContent = "Riwayat Nabung 📒";
+          $("histTitle").textContent = "Riwayat Transaksi 📒";
           $("goalName").textContent = "Total Semua Tujuan";
           countUp($("totalBig"), "totalAll", allT.all, rp);
           var subEl = $("totalSub");
           if (subEl) subEl.textContent = hasCombinedTarget ? ("dari " + rp(combinedTarget) + " target gabungan • " + goalCount + (goalCount === 1 ? " tujuan" : " tujuan")) : (goalCount + (goalCount === 1 ? " tujuan" : " tujuan") + " • target gabungan belum diatur");
+          var flowEl = $("flowLine");
+          if (flowEl) flowEl.textContent = "Masuk " + rp(allT.totalIn) + " • Keluar " + rp(allT.totalOut);
           $("totalLabel").textContent = "TOTAL TERKUMPUL — SEMUA TUJUAN";
 
           // Active goal detail line (small, muted — does not compete with combined headline)
@@ -1225,11 +1264,11 @@
           // Contributor cards are COMBINED across all goals
           countUp($("totalBlue"), "totalBlue", allT.blue, rp);
           countUp($("totalPink"), "totalPink", allT.pink, rp);
-          $("shareBlue").textContent = (allT.all > 0 ? Math.round(allT.blue / allT.all * 100) : 0) + "% dari total gabungan";
-          $("sharePink").textContent = (allT.all > 0 ? Math.round(allT.pink / allT.all * 100) : 0) + "% dari total gabungan";
+          $("shareBlue").textContent = (allT.totalIn > 0 ? Math.round(allT.blue / allT.totalIn * 100) : 0) + "% dari total gabungan";
+          $("sharePink").textContent = (allT.totalIn > 0 ? Math.round(allT.pink / allT.totalIn * 100) : 0) + "% dari total gabungan";
 
-          // TOP SAVER perk: strictly higher combined total leads; tie or both zero -> neither
-          var leader = (allT.all > 0 && allT.blue !== allT.pink) ? (allT.blue > allT.pink ? "blue" : "pink") : null;
+          // TOP SAVER perk: strictly higher total "in" contribution leads (spending never reduces it); tie or both zero -> neither
+          var leader = (allT.totalIn > 0 && allT.blue !== allT.pink) ? (allT.blue > allT.pink ? "blue" : "pink") : null;
           $("cardBlue").classList.toggle("leader", leader === "blue");
           $("cardPink").classList.toggle("leader", leader === "pink");
           // Expressions follow the same leader: leader = tengil, trailer = ngambek, tie = both manis
@@ -1254,15 +1293,16 @@
           if (!ids.length){
             var empty = document.createElement("div");
             empty.className = "empty";
-            empty.textContent = "Masih kosong 🍊 Setoran pertama ke pot bersama bakal muncul di sini.";
+            empty.textContent = "Masih kosong 🍊 Nabung atau pengeluaran pertama bakal muncul di sini.";
             list.appendChild(empty);
             return;
           }
           ids.forEach(function(id){
             var e = state.entries[id];
             var isPink = e.who === "prisqola";
+            var isOut = e.type === "out";
             var row = document.createElement("div");
-            row.className = "row";
+            row.className = "row" + (isOut ? " out" : "");
 
             var ava = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             ava.setAttribute("class", "ava");
@@ -1275,6 +1315,13 @@
             var who = document.createElement("div");
             who.className = "who " + (isPink ? "pink" : "blue");
             who.textContent = isPink ? "prisqola" : "syahrullian";
+            if (isOut){
+              var ico = document.createElement("span");
+              ico.className = "tx-ico";
+              ico.setAttribute("aria-hidden", "true");
+              ico.textContent = " 💸";
+              who.appendChild(ico);
+            }
             mid.appendChild(who);
             if (e.note){
               var note = document.createElement("div");
@@ -1286,11 +1333,17 @@
             when.className = "when";
             when.textContent = e.ts ? dateFmt.format(new Date(e.ts)) : "";
             mid.appendChild(when);
+            if (isOut && e.goalId && state.goals[e.goalId]){
+              var tag = document.createElement("span");
+              tag.className = "gtag";
+              tag.textContent = state.goals[e.goalId].name || "Tabungan Bersama";
+              mid.appendChild(tag);
+            }
             row.appendChild(mid);
 
             var amt = document.createElement("div");
-            amt.className = "amt";
-            amt.textContent = "+" + rp(e.amount);
+            amt.className = "amt" + (isOut ? " out" : "");
+            amt.textContent = (isOut ? "−" : "+") + rp(e.amount);
             row.appendChild(amt);
 
             var del = document.createElement("button");
@@ -1379,10 +1432,52 @@
         $("whoBlue").addEventListener("click", function(){ setWho("syahrullian"); });
         $("whoPink").addEventListener("click", function(){ setWho("prisqola"); });
 
+        /* ---------- Transaction mode: Nabung (in) / Pengeluaran (out) ---------- */
+        function renderExpenseGoalOptions(){
+          var sel = $("expenseGoalSelect");
+          var prev = sel.value;
+          sel.innerHTML = "";
+          var umum = document.createElement("option");
+          umum.value = "";
+          umum.textContent = "Umum";
+          sel.appendChild(umum);
+          goalIdsSorted().forEach(function(gid){
+            var opt = document.createElement("option");
+            opt.value = gid;
+            opt.textContent = (state.goals[gid] && state.goals[gid].name) || "Tabungan Bersama";
+            sel.appendChild(opt);
+          });
+          if (prev && state.goals[prev]) sel.value = prev;
+        }
+        function setTxMode(mode){
+          state.txMode = mode;
+          var isOut = mode === "out";
+          $("txIn").className = "tx-opt" + (!isOut ? " sel-in" : "");
+          $("txOut").className = "tx-opt" + (isOut ? " sel-out" : "");
+          $("nabungTitle").textContent = isOut ? "Catat pengeluaran 💸" : "Nabung dulu yuk! 🍊";
+          $("nabungSub").textContent = isOut
+            ? "Catat uang yang keluar dari pot bersama — saldo potnya bakal berkurang ya."
+            : "Catat setoran yang baru masuk ke e-wallet kalian. Setorannya masuk ke pot bersama buat semua tujuan 🍊";
+          $("whoLabel").textContent = isOut ? "Siapa yang keluarin?" : "Siapa yang nabung?";
+          $("noteInput").placeholder = isOut ? "Buat apa? mis. DP tiket pesawat" : "mis. gajian, sisa jajan, THR…";
+          $("expenseGoalWrap").style.display = isOut ? "" : "none";
+          var btn = $("btnSaveNabung");
+          btn.textContent = isOut ? "Simpan 💸" : "Simpan 🍊";
+          btn.classList.toggle("out", isOut);
+          if (isOut) renderExpenseGoalOptions();
+        }
+        $("txIn").addEventListener("click", function(){ setTxMode("in"); });
+        $("txOut").addEventListener("click", function(){ setTxMode("out"); });
+
         /* ---------- Delete ---------- */
         function openDelete(id, e){
           state.delId = id;
-          $("delDesc").textContent = "Hapus setoran " + rp(e.amount) + " dari " + (e.who === "prisqola" ? "prisqola" : "syahrullian") + (e.note ? " (“" + e.note + "”)" : "") + "? Catatan ini bakal hilang dari riwayat berdua.";
+          var whoName = e.who === "prisqola" ? "prisqola" : "syahrullian";
+          if (e.type === "out"){
+            $("delDesc").textContent = "Hapus pengeluaran " + rp(e.amount) + " dari " + whoName + (e.note ? " (“" + e.note + "”)" : "") + "? Saldo pot bakal nambah lagi sebesar itu.";
+          } else {
+            $("delDesc").textContent = "Hapus setoran " + rp(e.amount) + " dari " + whoName + (e.note ? " (“" + e.note + "”)" : "") + "? Catatan ini bakal hilang dari riwayat berdua.";
+          }
           openSheet("delOverlay");
         }
 
@@ -1495,6 +1590,7 @@
         /* ---------- Actions ---------- */
         $("btnNabung").addEventListener("click", function(){
           $("nabungErr").classList.remove("show");
+          setTxMode("in");
           openSheet("nabungOverlay");
           setTimeout(function(){ $("amountInput").focus(); }, 250);
         });
@@ -1502,31 +1598,48 @@
         $("btnSaveNabung").addEventListener("click", function(){
           var err = $("nabungErr");
           var amount = moneyVal($("amountInput"));
+          var isOut = state.txMode === "out";
           if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
-          if (!amount || amount <= 0){ err.textContent = "Isi dulu jumlahnya ya, minimal Rp 1 🍊"; err.classList.add("show"); return; }
-          // Shared pot: a deposit goes into the one pot — no goal choice.
+          if (!amount || amount <= 0){ err.textContent = isOut ? "Isi dulu jumlah pengeluarannya ya, minimal Rp 1 💸" : "Isi dulu jumlahnya ya, minimal Rp 1 🍊"; err.classList.add("show"); return; }
+          if (isOut){
+            var saldo = totalsAll().all;
+            if (amount > saldo){
+              toast("Saldo pot tidak cukup — sisa " + rp(saldo));
+              err.textContent = "Saldo pot tidak cukup — sisa " + rp(saldo) + " 💸";
+              err.classList.add("show");
+              return;
+            }
+          }
+          var saveLabel = isOut ? "Simpan 💸" : "Simpan 🍊";
           var btn = $("btnSaveNabung");
           btn.disabled = true;
           btn.textContent = "Menyimpan…";
-          var pushPromise = ref.child("entries").push({
-            who: state.who,
-            amount: amount,
-            note: $("noteInput").value.trim(),
-            ts: Date.now()
-          });
+          var payload;
+          if (isOut){
+            var gv = $("expenseGoalSelect").value;
+            payload = { type: "out", who: state.who, amount: amount, note: $("noteInput").value.trim(), ts: Date.now(), goalId: gv ? gv : null };
+          } else {
+            // Shared pot: a deposit goes into the one pot — no goal choice.
+            payload = { type: "in", who: state.who, amount: amount, note: $("noteInput").value.trim(), ts: Date.now() };
+          }
+          var pushPromise = ref.child("entries").push(payload);
           pushPromise.then(function(){
             btn.disabled = false;
-            btn.textContent = "Simpan 🍊";
+            btn.textContent = saveLabel;
             $("amountInput").value = "";
             $("noteInput").value = "";
             closeSheet("nabungOverlay");
-            dropOrange();
-            confettiBurst(22, false);
-            toast("Yeay! " + rp(amount) + " masuk celengan 🍊");
+            if (isOut){
+              toast("Pengeluaran " + rp(amount) + " tercatat 💸");
+            } else {
+              dropOrange();
+              confettiBurst(22, false);
+              toast("Yeay! " + rp(amount) + " masuk celengan 🍊");
+            }
             document.querySelector(".jar-zone").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
           }).catch(function(){
             btn.disabled = false;
-            btn.textContent = "Simpan 🍊";
+            btn.textContent = saveLabel;
             err.textContent = "Gagal nyimpan — koneksinya lagi putus. Coba lagi ya 🙏";
             err.classList.add("show");
           });
