@@ -195,6 +195,29 @@
       .person .ptotal{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.25rem; margin-top:2px; word-break:break-word; }
       .person .pshare{ font-weight:800; font-size:.82rem; color:var(--ink-soft); margin-top:1px; }
 
+      /* ---------- Rincian Tujuan (breakdown) ---------- */
+      .breakdown-title{ display:flex; align-items:center; gap:9px; }
+      .breakdown-title::before{ content:""; width:20px; height:6px; border-radius:999px; background:var(--orange-deep); flex:none; }
+      .breakdown-list{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+      .breakdown-row{
+        display:flex; align-items:flex-start; gap:12px; width:100%; text-align:left;
+        background:linear-gradient(180deg,#FFE9CE,#FFE0B8); border:2px solid #F6C88F;
+        border-radius:18px; padding:13px 14px; color:var(--ink);
+      }
+      .breakdown-row:active{ transform:scale(.99); }
+      .breakdown-row.active{ border-color:var(--orange-deep); background:linear-gradient(180deg,#FFDFB5,#FFCE94); box-shadow:0 4px 0 rgba(242,109,29,.28); }
+      .br-icon{
+        flex:none; width:48px; height:48px; display:flex; align-items:center; justify-content:center;
+        font-size:1.85rem; line-height:1; background:rgba(255,255,255,.65); border-radius:14px;
+      }
+      .br-main{ flex:1; min-width:0; }
+      .br-top{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; }
+      .br-name{ font-weight:800; font-size:1.02rem; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .br-pct{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.45rem; color:var(--orange-deep); line-height:1; white-space:nowrap; }
+      .br-sub{ font-size:.80rem; font-weight:700; color:var(--ink-soft); margin-top:2px; line-height:1.35; }
+      .br-bar{ height:10px; background:rgba(255,255,255,.85); border-radius:999px; overflow:hidden; margin-top:8px; }
+      .br-fill{ height:100%; background:var(--orange-deep); border-radius:999px; transition:width .7s cubic-bezier(.22,1,.36,1); min-width:0; }
+
       /* ---------- Nabung button ---------- */
       .nabung-bar{
         position:fixed; left:0; right:0; bottom:0; z-index:20;
@@ -447,6 +470,9 @@
           <div class="pshare" id="sharePink">0% dari total</div>
         </div>
       </div>
+
+      <h2 class="sec-title breakdown-title">Rincian Tujuan</h2>
+      <div class="breakdown-list" id="breakdownList"></div>
 
       <h2 class="sec-title" id="histTitle">Riwayat Nabung 📒</h2>
       <div class="hist" id="histList"></div>
@@ -728,6 +754,95 @@
         }
         function fmtPct(p){ return p===null ? "—" : (Math.round(p*10)/10).toString().replace(".", ",") + "%"; }
 
+        function goalIcon(name){
+          var n = (name || "").toLowerCase();
+          if (n.indexOf("libur") !== -1 || n.indexOf("jalan") !== -1 || n.indexOf("travel") !== -1) return "🧳";
+          if (n.indexOf("darurat") !== -1 || n.indexOf("cadangan") !== -1) return "🛟";
+          if (n.indexOf("nikah") !== -1 || n.indexOf("kawin") !== -1) return "💍";
+          if (n.indexOf("umroh") !== -1 || n.indexOf("haji") !== -1) return "🕋";
+          if (n.indexOf("sekolah") !== -1 || n.indexOf("kuliah") !== -1 || n.indexOf("pendidikan") !== -1) return "🎓";
+          if (n.indexOf("mobil") !== -1 || n.indexOf("motor") !== -1 || n.indexOf("kendaraan") !== -1) return "🚗";
+          if (n.indexOf("rumah") !== -1) return "🏠";
+          if (n.indexOf("anak") !== -1 || n.indexOf("bayi") !== -1) return "🍼";
+          if (n.indexOf("handphone") !== -1 || n.indexOf("ponsel") !== -1 || n.indexOf("gadget") !== -1 || n.indexOf("laptop") !== -1 || n.indexOf("hp") !== -1) return "📱";
+          return "🍊";
+        }
+
+        function renderBreakdown(){
+          var wrap = $("breakdownList");
+          if (!wrap) return;
+          wrap.innerHTML = "";
+          var ids = goalIdsSorted();
+          var combined = totalTargetAll();
+          if (!ids.length){
+            var empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = "Belum ada tujuan 🍊 Bikin tujuan pertama lewat tombol + Tujuan di atas ya.";
+            wrap.appendChild(empty);
+            return;
+          }
+          ids.forEach(function(gid){
+            var g = state.goals[gid] || {};
+            var sums = sumEntries(entriesForGoal(gid));
+            var rawPct = combined > 0 ? (sums.all / combined) * 100 : 0;
+            var pct = Math.min(100, Math.max(0, rawPct));
+            var pctText = combined > 0 ? (Math.round(pct * 10) / 10).toString().replace(".", ",") + "%" : "0%";
+
+            var row = document.createElement("button");
+            row.type = "button";
+            row.className = "breakdown-row" + (gid === state.activeGoalId ? " active" : "");
+            row.setAttribute("aria-label", "Pilih tujuan " + (g.name || "Tabungan Bersama"));
+
+            var icon = document.createElement("span");
+            icon.className = "br-icon";
+            icon.setAttribute("aria-hidden", "true");
+            icon.textContent = goalIcon(g.name);
+            row.appendChild(icon);
+
+            var main = document.createElement("span");
+            main.className = "br-main";
+
+            var top = document.createElement("span");
+            top.className = "br-top";
+            top.style.display = "flex";
+            var nameEl = document.createElement("span");
+            nameEl.className = "br-name";
+            nameEl.textContent = g.name || "Tabungan Bersama";
+            var pctEl = document.createElement("span");
+            pctEl.className = "br-pct";
+            pctEl.textContent = pctText;
+            top.appendChild(nameEl);
+            top.appendChild(pctEl);
+            main.appendChild(top);
+
+            var sub = document.createElement("span");
+            sub.className = "br-sub";
+            sub.style.display = "block";
+            if (g.target > 0) sub.textContent = rp(sums.all) + " terkumpul dari target " + rp(g.target);
+            else sub.textContent = rp(sums.all) + " terkumpul • target belum diatur";
+            main.appendChild(sub);
+
+            var bar = document.createElement("span");
+            bar.className = "br-bar";
+            bar.style.display = "block";
+            var fillEl = document.createElement("span");
+            fillEl.className = "br-fill";
+            fillEl.style.display = "block";
+            fillEl.style.width = pct + "%";
+            bar.appendChild(fillEl);
+            main.appendChild(bar);
+
+            row.appendChild(main);
+
+            row.addEventListener("click", function(){
+              if (gid === state.activeGoalId) return;
+              if (ref) ref.update({ activeGoalId: gid }).catch(function(){ toast("Gagal ganti tujuan 🙏"); });
+              else { state.activeGoalId = gid; render(); }
+            });
+            wrap.appendChild(row);
+          });
+        }
+
         function renderGoalSwitcher(){
           var wrap = $("goalSwitcher");
           wrap.innerHTML = "";
@@ -855,6 +970,7 @@
           $("shareBlue").textContent = (allT.all > 0 ? Math.round(allT.blue / allT.all * 100) : 0) + "% dari total gabungan";
           $("sharePink").textContent = (allT.all > 0 ? Math.round(allT.pink / allT.all * 100) : 0) + "% dari total gabungan";
 
+          renderBreakdown();
           renderHistory();
           checkMilestones(cPct);
         }
