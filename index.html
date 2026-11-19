@@ -110,6 +110,13 @@
       .total-all .ta-label{ font-weight:800; font-size:.85rem; color:var(--ink-soft); }
       .total-all .ta-label b{ color:var(--ink); display:block; font-size:.92rem; }
       .total-all .ta-val{ font-family:"Baloo 2",cursive; font-weight:800; color:var(--orange-deep); font-size:1.15rem; white-space:nowrap; }
+      .active-goal-line{
+        text-align:center; font-weight:700; font-size:.88rem; color:var(--ink-soft);
+        margin-top:10px; line-height:1.45; background:var(--orange-pale);
+        border:1.5px solid var(--line); border-radius:999px; padding:7px 14px; max-width:100%;
+      }
+      .active-goal-line b{ color:var(--ink); font-weight:800; }
+      .total-sub{ text-align:center; font-weight:700; font-size:.86rem; color:var(--ink-soft); margin-top:2px; }
       select.goal-select{
         width:100%; border:2px solid var(--line); border-radius:14px; background:#fff;
         padding:12px 14px; font-size:1rem; font-weight:700; color:var(--ink); outline:none;
@@ -376,18 +383,15 @@
       </div>
 
       <h1 class="title">Limoon Pocket</h1>
-      <p class="goal-name" id="goalName">Tabungan Bersama</p>
+      <p class="goal-name" id="goalName">Total Semua Tujuan</p>
       <p class="goal-sub">tabungan bareng syahrullian &amp; prisqola 🍊</p>
 
       <div class="goal-switcher" id="goalSwitcher" aria-label="Pilih tujuan tabungan"></div>
 
       <div class="card">
-        <div class="total-label" id="totalLabel">TOTAL TERKUMPUL — TUJUAN INI</div>
+        <div class="total-label" id="totalLabel">TOTAL TERKUMPUL — SEMUA TUJUAN</div>
         <div class="total-big" id="totalBig">Rp 0</div>
-        <div class="total-all" id="totalAllBox">
-          <div class="ta-label">Total Semua Tujuan<b id="totalAllCount">1 tujuan aktif</b></div>
-          <div class="ta-val" id="totalAllVal">Rp 0</div>
-        </div>
+        <div class="total-sub" id="totalSub">dari Rp 0 target gabungan</div>
       </div>
 
       <div class="card jar-zone">
@@ -422,8 +426,9 @@
         <div class="pct-big" id="pctBig"></div>
         <div class="bar" id="barWrap"><div class="bar-fill" id="barFill"></div></div>
         <div class="bar-line" id="barLine">Memuat…</div>
+        <div class="active-goal-line" id="activeGoalLine">Tujuan aktif: —</div>
         <div class="target-hint" id="targetHint" style="display:none">
-          Target belum diatur nih 🍊<br/>Atur nama tujuan &amp; targetnya lewat tombol <b>Pengaturan</b> di atas, biar progresnya kelihatan.
+          Target gabungan belum diatur nih 🍊<br/>Atur target di tiap tujuan lewat tombol <b>Pengaturan</b> di atas, biar progres gabungannya kelihatan.
         </div>
         <div class="milestone" id="milestone"></div>
       </div>
@@ -594,7 +599,8 @@
           goals: {},          // goalId -> { name, target, createdAt }
           activeGoalId: null,
           entries: {},        // id -> entry { who, amount, note, ts, goalId }
-          prevPctByGoal: {},  // goalId -> last pct (for milestone crossing)
+          prevPctByGoal: {},  // goalId -> last pct (kept for chip data)
+          prevCombinedPct: undefined, // last combined pct (for milestone crossing)
           prevActiveId: null,
           loaded: false,
           who: "syahrullian",
@@ -637,6 +643,20 @@
           if (!g || !(g.target>0)) return null;
           var t = sumEntries(entriesForGoal(gid));
           return Math.min(100, (t.all / g.target) * 100);
+        }
+        function totalTargetAll(){
+          var sum = 0;
+          Object.keys(state.goals).forEach(function(gid){
+            var g = state.goals[gid];
+            if (g && typeof g.target === "number" && g.target > 0) sum += g.target;
+          });
+          return sum;
+        }
+        function combinedPct(){
+          var tt = totalTargetAll();
+          if (!(tt > 0)) return null;
+          var allT = totalsAll();
+          return Math.min(100, (allT.all / tt) * 100);
         }
 
         /* ---------- Toast ---------- */
@@ -756,23 +776,38 @@
         }
 
         function render(){
-          var t = totals();
-          var target = activeTarget();
-          var hasTarget = target > 0;
-          var pct = hasTarget ? Math.min(100, (t.all / target) * 100) : null;
+          var tActive = totals();
+          var activeTargetVal = activeTarget();
+          var activePct = pctForGoal(state.activeGoalId);
           var allT = totalsAll();
+          var combinedTarget = totalTargetAll();
+          var hasCombinedTarget = combinedTarget > 0;
+          var cPct = hasCombinedTarget ? Math.min(100, (allT.all / combinedTarget) * 100) : null;
           var goalCount = Object.keys(state.goals).length || 1;
 
           renderGoalSwitcher();
           $("histTitle").textContent = "Riwayat Nabung — " + activeGoalName() + " 📒";
-          $("goalName").textContent = activeGoalName();
-          $("totalBig").textContent = rp(t.all);
-          $("totalAllVal").textContent = rp(allT.all);
-          $("totalAllCount").textContent = goalCount + (goalCount === 1 ? " tujuan" : " tujuan") + " • gabungan semua";
-          $("totalLabel").textContent = "TOTAL TERKUMPUL — " + (activeGoalName() || "TUJUAN INI").toUpperCase();
+          $("goalName").textContent = "Total Semua Tujuan";
+          $("totalBig").textContent = rp(allT.all);
+          var subEl = $("totalSub");
+          if (subEl) subEl.textContent = hasCombinedTarget ? ("dari " + rp(combinedTarget) + " target gabungan • " + goalCount + (goalCount === 1 ? " tujuan" : " tujuan")) : (goalCount + (goalCount === 1 ? " tujuan" : " tujuan") + " • target gabungan belum diatur");
+          $("totalLabel").textContent = "TOTAL TERKUMPUL — SEMUA TUJUAN";
 
-          // Jar fill: inner area y from 226 (bottom) up to 84 (top) => height 142
-          var fillH = pct === null ? 0 : (pct / 100) * 142;
+          // Active goal detail line (small, muted — does not compete with combined headline)
+          var agLine = $("activeGoalLine");
+          if (agLine){
+            if (activeTargetVal > 0){
+              agLine.innerHTML = "Tujuan aktif: <b></b> — " + rp(tActive.all) + " / " + rp(activeTargetVal) + " (" + fmtPct(activePct) + ")";
+              agLine.querySelector("b").textContent = activeGoalName();
+            } else {
+              agLine.innerHTML = "Tujuan aktif: <b></b> — " + rp(tActive.all) + " terkumpul • target belum diatur";
+              agLine.querySelector("b").textContent = activeGoalName();
+            }
+          }
+
+          // Jar fill is ALWAYS combined: inner area y from 226 (bottom) up to 84 (top) => height 142
+          var displayPct = cPct === null ? 0 : cPct;
+          var fillH = (displayPct / 100) * 142;
           var fillTop = 226 - fillH;
           var fill = $("jarFill");
           fill.setAttribute("y", fillTop);
@@ -797,30 +832,31 @@
             }
           }
 
-          if (hasTarget){
-            $("pctBig").textContent = (Math.round(pct * 10) / 10).toString().replace(".", ",") + "%";
+          if (hasCombinedTarget){
+            $("pctBig").textContent = (Math.round(cPct * 10) / 10).toString().replace(".", ",") + "%";
             $("barWrap").style.display = "";
-            $("barFill").style.width = pct + "%";
+            $("barFill").style.width = cPct + "%";
             $("targetHint").style.display = "none";
-            var sisa = Math.max(0, target - t.all);
-            $("barLine").innerHTML = rp(t.all) + " dari " + rp(target) +
-              (sisa > 0 ? '<span class="sisa">Kurang ' + rp(sisa) + " lagi buat sampai tujuan 💪</span>"
-                        : '<span class="sisa">Targetnya udah kesampaian! 🥳</span>');
+            var sisa = Math.max(0, combinedTarget - allT.all);
+            $("barLine").innerHTML = rp(allT.all) + " dari " + rp(combinedTarget) +
+              (sisa > 0 ? '<span class="sisa">Kurang ' + rp(sisa) + " lagi buat sampai semua tujuan 💪</span>"
+                        : '<span class="sisa">Semua targetnya udah kesampaian! 🥳</span>');
           } else {
-            $("pctBig").textContent = "";
-            $("barWrap").style.display = "none";
+            $("pctBig").textContent = "0%";
+            $("barWrap").style.display = "";
             $("barFill").style.width = "0%";
             $("targetHint").style.display = "";
-            $("barLine").textContent = t.all > 0 ? "Udah kekumpul " + rp(t.all) + " — tinggal atur targetnya 🍊" : "Belum ada setoran. Yuk nabung pertama kali!";
+            $("barLine").textContent = allT.all > 0 ? "Udah kekumpul " + rp(allT.all) + " dari semua tujuan — tinggal atur targetnya 🍊" : "Belum ada setoran. Yuk nabung pertama kali!";
           }
 
-          $("totalBlue").textContent = rp(t.blue);
-          $("totalPink").textContent = rp(t.pink);
-          $("shareBlue").textContent = (t.all > 0 ? Math.round(t.blue / t.all * 100) : 0) + "% dari total";
-          $("sharePink").textContent = (t.all > 0 ? Math.round(t.pink / t.all * 100) : 0) + "% dari total";
+          // Contributor cards are COMBINED across all goals
+          $("totalBlue").textContent = rp(allT.blue);
+          $("totalPink").textContent = rp(allT.pink);
+          $("shareBlue").textContent = (allT.all > 0 ? Math.round(allT.blue / allT.all * 100) : 0) + "% dari total gabungan";
+          $("sharePink").textContent = (allT.all > 0 ? Math.round(allT.pink / allT.all * 100) : 0) + "% dari total gabungan";
 
           renderHistory();
-          checkMilestones(pct);
+          checkMilestones(cPct);
         }
 
         function renderHistory(){
@@ -888,33 +924,29 @@
           });
         }
 
-        /* ---------- Milestones ---------- */
+        /* ---------- Milestones (driven by COMBINED percentage) ---------- */
         function checkMilestones(pct){
           var banner = $("milestone");
-          var gid = state.activeGoalId;
-          if (pct === null){ banner.className = "milestone"; if (gid) state.prevPctByGoal[gid] = null; return; }
+          if (pct === null){ banner.className = "milestone"; state.prevCombinedPct = null; return; }
           if (pct >= 100){
-            banner.textContent = "TUJUAN TERCAPAI! 🎉🍊 “" + activeGoalName() + "” kesampaian — kalian berdua luar biasa!";
+            banner.textContent = "SEMUA TUJUAN TERCAPAI! 🎉🍊 Gabungan semua tujuan kesampaian — kalian berdua luar biasa!";
             banner.className = "milestone show done";
           }
-          if (!state.loaded){ if (gid) state.prevPctByGoal[gid] = pct; return; }
-          // if active goal just switched, don't celebrate old goal's crossing
-          if (state.prevActiveId && state.prevActiveId !== gid){ if (gid) state.prevPctByGoal[gid] = pct; state.prevActiveId = gid; return; }
-          state.prevActiveId = gid;
-          var prev = gid ? state.prevPctByGoal[gid] : null;
-          if (gid) state.prevPctByGoal[gid] = pct;
+          if (!state.loaded){ state.prevCombinedPct = pct; return; }
+          var prev = state.prevCombinedPct;
+          state.prevCombinedPct = pct;
           if (prev === null || prev === undefined) return;
           var steps = [25, 50, 75, 100];
           for (var i = 0; i < steps.length; i++){
             if (prev < steps[i] && pct >= steps[i]){
               if (steps[i] === 100){
                 confettiBurst(90, true);
-                toast("TUJUAN TERCAPAI! 🎉 Selamat berdua!");
+                toast("SEMUA TUJUAN TERCAPAI! 🎉 Selamat berdua!");
               } else {
-                banner.textContent = "Yeay! Udah " + steps[i] + "% jalan menuju tujuan! 🍊 Terus semangat berdua ya~";
+                banner.textContent = "Yeay! Gabungan semua tujuan udah " + steps[i] + "% jalan! 🍊 Terus semangat berdua ya~";
                 banner.className = "milestone show";
                 confettiBurst(36, false);
-                toast("Milestone " + steps[i] + "% tercapai! 🍊");
+                toast("Milestone gabungan " + steps[i] + "% tercapai! 🍊");
               }
               break;
             }
@@ -1040,6 +1072,7 @@
               $("loadingNote").style.display = "none";
               render();
               if (firstLoadM && migId) state.prevPctByGoal[migId] = pctForGoal(migId);
+              if (firstLoadM) state.prevCombinedPct = combinedPct();
               state.prevActiveId = state.activeGoalId;
               return;
             }
@@ -1069,6 +1102,7 @@
             render();
             if (firstLoad){
               goalIdsSorted().forEach(function(gid){ state.prevPctByGoal[gid] = pctForGoal(gid); });
+              state.prevCombinedPct = combinedPct();
               state.prevActiveId = state.activeGoalId;
             }
           }, function(){
