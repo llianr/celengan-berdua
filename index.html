@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    <link rel="icon" href="data:," />
+    <title>Celengan Berdua</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --cream:#FFF6E9;
+        --cream-2:#FFEFDB;
+        --card:#FFFFFF;
+        --ink:#5B4636;
+        --ink-soft:#8A7261;
+        --orange:#FF8A3D;
+        --orange-deep:#F26D1D;
+        --orange-soft:#FFE3C2;
+        --orange-pale:#FFF1DE;
+        --leaf:#6FBF5E;
+        --leaf-deep:#4E9B41;
+        --blue:#4A90D9;
+        --blue-soft:#E1EFFF;
+        --blue-ink:#2F639E;
+        --pink:#EF6FA5;
+        --pink-soft:#FFE4F0;
+        --pink-ink:#B23A72;
+        --line:#F3DCC0;
+        --danger:#D9534A;
+        --shadow:0 6px 0 rgba(242,109,29,.14), 0 14px 28px rgba(180,110,40,.12);
+        --radius:22px;
+      }
+      *{ box-sizing:border-box; }
+      html{ -webkit-text-size-adjust:100%; }
+      body{
+        margin:0;
+        font-family:"Nunito",system-ui,sans-serif;
+        color:var(--ink);
+        background-color:var(--cream);
+        background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23FFB066' stroke-opacity='.35' stroke-width='2'%3E%3Ccircle cx='24' cy='26' r='9'/%3E%3Cpath d='M24 17v18M15 26h18M18 20l12 12M30 20L18 32'/%3E%3C/g%3E%3Cpath d='M88 74c-6-8-2-16 6-18 1 8-1 15-6 18z' fill='%237BC96F' fill-opacity='.30'/%3E%3Cpath d='M52 96c-2.5-3.2-7-1.8-7 1.6 0 3 3.4 4.9 7 7 3.6-2.1 7-4 7-7 0-3.4-4.5-4.8-7-1.6z' fill='%23EF6FA5' fill-opacity='.28'/%3E%3C/svg%3E");
+        min-height:100vh;
+      }
+      button, input, select, textarea{ font-family:inherit; }
+      button{ cursor:pointer; }
+      button, [role="button"], select, input:not([type="checkbox"],[type="radio"]){ min-height:2.25rem; }
+
+      .wrap{ max-width:600px; margin:0 auto; padding:18px 16px 120px; }
+
+      /* ---------- Header ---------- */
+      .conn{
+        display:inline-flex; align-items:center; gap:7px;
+        background:#fff; border:2px solid var(--line); border-radius:999px;
+        padding:5px 12px; font-size:.78rem; font-weight:800; color:var(--ink-soft);
+      }
+      .conn .dot{ width:9px; height:9px; border-radius:50%; background:#F2B03D; flex:none; }
+      .conn.on .dot{ background:var(--leaf); }
+      .conn.off .dot{ background:var(--danger); }
+      .topbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+      .btn-gear{
+        display:inline-flex; align-items:center; gap:6px;
+        background:#fff; border:2px solid var(--line); color:var(--ink);
+        border-radius:999px; padding:6px 14px; font-weight:800; font-size:.85rem;
+        min-height:2.5rem;
+      }
+      .btn-gear:active{ transform:scale(.96); }
+
+      .mascots{ display:flex; justify-content:center; align-items:flex-end; margin-top:6px; }
+      .mascots svg{ width:min(300px,78vw); height:auto; display:block; }
+      .bob{ animation:bob 3.2s ease-in-out infinite; transform-origin:50% 90%; }
+      .bob2{ animation:bob 3.2s ease-in-out .5s infinite; transform-origin:50% 90%; }
+      @keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } }
+
+      h1.title{
+        font-family:"Baloo 2",cursive; font-weight:800; text-align:center;
+        font-size:clamp(2.1rem,9vw,3rem); line-height:1.05; margin:2px 0 0;
+        color:var(--orange-deep); letter-spacing:.5px;
+        text-shadow:0 3px 0 #FFD9AE;
+      }
+      .goal-name{
+        text-align:center; font-family:"Baloo 2",cursive; font-weight:700;
+        font-size:1.15rem; color:var(--ink); margin:6px 0 0;
+      }
+      .goal-sub{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:.86rem; margin:2px 0 0; }
+
+      /* ---------- Cards ---------- */
+      .card{
+        background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
+        box-shadow:var(--shadow); padding:18px; margin-top:16px;
+      }
+      .total-label{ text-align:center; font-weight:800; color:var(--ink-soft); font-size:.85rem; letter-spacing:.4px; }
+      .total-big{
+        text-align:center; font-family:"Baloo 2",cursive; font-weight:800;
+        font-size:clamp(2rem,10vw,2.9rem); color:var(--orange-deep); line-height:1.1; margin-top:2px;
+        word-break:break-word;
+      }
+
+      /* ---------- Jar ---------- */
+      .jar-zone{ display:flex; flex-direction:column; align-items:center; }
+      .jar-box{ position:relative; width:190px; }
+      .jar-box svg{ width:100%; height:auto; display:block; }
+      .drop-orange{
+        position:absolute; left:50%; top:-8px; width:34px; height:34px; margin-left:-17px;
+        pointer-events:none; z-index:3;
+      }
+      .pct-big{
+        font-family:"Baloo 2",cursive; font-weight:800; font-size:1.9rem; color:var(--orange-deep);
+        margin-top:2px; line-height:1;
+      }
+      .bar{
+        width:100%; height:26px; background:var(--orange-pale); border:2px solid var(--line);
+        border-radius:999px; overflow:hidden; margin-top:12px;
+      }
+      .bar-fill{
+        height:100%; width:0%;
+        background:repeating-linear-gradient(45deg,var(--orange) 0 16px,#FF9D57 16px 32px);
+        border-radius:999px; transition:width .9s cubic-bezier(.22,1,.36,1);
+      }
+      .bar-line{ text-align:center; font-weight:800; margin-top:10px; font-size:.98rem; }
+      .bar-line .sisa{ color:var(--ink-soft); font-weight:700; font-size:.86rem; display:block; margin-top:2px; }
+      .target-hint{
+        background:var(--orange-pale); border:2px dashed var(--orange);
+        color:var(--ink); border-radius:16px; padding:10px 14px; text-align:center;
+        font-weight:700; font-size:.9rem; margin-top:12px; width:100%;
+      }
+
+      .milestone{
+        display:none; width:100%; margin-top:14px; text-align:center;
+        background:linear-gradient(135deg,#FFE9C7,#FFD9E8);
+        border:2px solid var(--orange); border-radius:18px; padding:12px 14px;
+        font-family:"Baloo 2",cursive; font-weight:700; font-size:1.05rem; color:var(--ink);
+      }
+      .milestone.show{ display:block; animation:pop .45s cubic-bezier(.34,1.56,.64,1); }
+      .milestone.done{ background:linear-gradient(135deg,#FFD166,#FF8A3D); color:#fff; border-color:var(--orange-deep); font-size:1.2rem; }
+      @keyframes pop{ from{ transform:scale(.85); opacity:0 } to{ transform:scale(1); opacity:1 } }
+
+      /* ---------- Contributors ---------- */
+      .duo{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:16px; }
+      .person{ border-radius:var(--radius); padding:16px 14px; border:2px solid; text-align:center; }
+      .person.blue{ background:var(--blue-soft); border-color:#BFD9F7; }
+      .person.pink{ background:var(--pink-soft); border-color:#F8C3DA; }
+      .person svg{ width:64px; height:64px; }
+      .person .pname{ font-family:"Baloo 2",cursive; font-weight:700; font-size:1.12rem; margin-top:2px; }
+      .person.blue .pname{ color:var(--blue-ink); }
+      .person.pink .pname{ color:var(--pink-ink); }
+      .person .ptotal{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.25rem; margin-top:2px; word-break:break-word; }
+      .person .pshare{ font-weight:800; font-size:.82rem; color:var(--ink-soft); margin-top:1px; }
+
+      /* ---------- Nabung button ---------- */
+      .nabung-bar{
+        position:fixed; left:0; right:0; bottom:0; z-index:20;
+        padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+        background:linear-gradient(to top, var(--cream) 78%, rgba(255,246,233,0));
+      }
+      .nabung-inner{ max-width:600px; margin:0 auto; }
+      .btn-nabung{
+        width:100%; border:none; border-radius:999px; padding:16px;
+        background:linear-gradient(180deg,#FFA25E,var(--orange-deep));
+        color:#fff; font-family:"Baloo 2",cursive; font-weight:800; font-size:1.35rem;
+        box-shadow:0 6px 0 #D3541A, 0 16px 26px rgba(242,109,29,.35);
+        transition:transform .08s ease, box-shadow .08s ease; min-height:3.6rem;
+      }
+      .btn-nabung:active{ transform:translateY(4px) scale(.99); box-shadow:0 2px 0 #D3541A, 0 8px 16px rgba(242,109,29,.3); }
+
+      /* ---------- History ---------- */
+      .sec-title{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.3rem; margin:22px 2px 4px; color:var(--ink); }
+      .hist{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
+      .row{
+        display:flex; align-items:center; gap:12px; background:#fff; border:2px solid var(--line);
+        border-radius:18px; padding:11px 13px;
+      }
+      .row .ava{ width:42px; height:42px; flex:none; }
+      .row .mid{ flex:1; min-width:0; }
+      .row .who{ font-weight:800; font-size:.95rem; }
+      .row .who.blue{ color:var(--blue-ink); }
+      .row .who.pink{ color:var(--pink-ink); }
+      .row .note{ color:var(--ink-soft); font-weight:600; font-size:.84rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .row .when{ color:var(--ink-soft); font-size:.76rem; font-weight:700; }
+      .row .amt{ font-family:"Baloo 2",cursive; font-weight:800; color:var(--leaf-deep); font-size:1.02rem; white-space:nowrap; }
+      .btn-del{
+        flex:none; width:38px; height:38px; border-radius:12px; border:2px solid var(--line);
+        background:#FFF7EF; font-size:1rem; line-height:1; padding:0;
+      }
+      .btn-del:active{ transform:scale(.92); }
+      .empty{
+        text-align:center; color:var(--ink-soft); font-weight:700; background:#fff;
+        border:2px dashed var(--line); border-radius:18px; padding:22px 16px; font-size:.95rem;
+      }
+
+      footer{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:.85rem; margin-top:26px; line-height:1.55; }
+
+      /* ---------- Sheets / modals ---------- */
+      .overlay{
+        position:fixed; inset:0; background:rgba(91,58,30,.45); z-index:40;
+        display:none; align-items:flex-end; justify-content:center; padding:0;
+      }
+      .overlay.open{ display:flex; }
+      .sheet{
+        background:var(--cream); width:100%; max-width:600px; max-height:92vh; overflow-y:auto;
+        border-radius:28px 28px 0 0; padding:22px 20px calc(22px + env(safe-area-inset-bottom));
+        animation:up .3s cubic-bezier(.22,1,.36,1);
+      }
+      @keyframes up{ from{ transform:translateY(40px); opacity:.4 } to{ transform:translateY(0); opacity:1 } }
+      @media (min-width:640px){ .overlay{ align-items:center; padding:20px; } .sheet{ border-radius:28px; } }
+      .sheet h2{ font-family:"Baloo 2",cursive; font-weight:800; margin:0 0 4px; font-size:1.5rem; color:var(--orange-deep); }
+      .sheet .sub{ color:var(--ink-soft); font-weight:700; font-size:.88rem; margin:0 0 16px; }
+      .who-toggle{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+      .who-opt{
+        border:3px solid var(--line); background:#fff; border-radius:18px; padding:10px 8px;
+        display:flex; flex-direction:column; align-items:center; gap:2px;
+        font-family:"Baloo 2",cursive; font-weight:700; font-size:1.05rem; min-height:5.2rem;
+      }
+      .who-opt svg{ width:46px; height:46px; }
+      .who-opt.sel-blue{ border-color:var(--blue); background:var(--blue-soft); }
+      .who-opt.sel-pink{ border-color:var(--pink); background:var(--pink-soft); }
+      label.flabel{ display:block; font-weight:800; font-size:.88rem; margin:12px 0 6px; }
+      .money-wrap{ position:relative; }
+      .money-wrap span{ position:absolute; left:14px; top:50%; transform:translateY(-50%); font-weight:800; color:var(--ink-soft); }
+      input[type="text"], input[type="number"]{
+        width:100%; border:2px solid var(--line); border-radius:14px; background:#fff;
+        padding:12px 14px; font-size:1.05rem; font-weight:700; color:var(--ink); outline:none;
+      }
+      input:focus{ border-color:var(--orange); }
+      .money-wrap input{ padding-left:46px; font-size:1.25rem; font-family:"Baloo 2",cursive; }
+      .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+      .chip{
+        border:2px solid var(--line); background:#fff; border-radius:999px; padding:7px 14px;
+        font-weight:800; font-size:.88rem; color:var(--ink); min-height:2.4rem;
+      }
+      .chip:active{ transform:scale(.95); background:var(--orange-pale); }
+      .sheet-actions{ display:flex; gap:10px; margin-top:22px; }
+      .btn-save{
+        flex:1; border:none; border-radius:999px; padding:14px;
+        background:linear-gradient(180deg,#FFA25E,var(--orange-deep)); color:#fff;
+        font-family:"Baloo 2",cursive; font-weight:800; font-size:1.15rem;
+        box-shadow:0 4px 0 #D3541A; min-height:3.4rem;
+      }
+      .btn-save:active{ transform:translateY(3px); box-shadow:0 1px 0 #D3541A; }
+      .btn-save:disabled{ opacity:.55; }
+      .btn-cancel{
+        border:2px solid var(--line); background:#fff; border-radius:999px; padding:14px 20px;
+        font-weight:800; color:var(--ink-soft); min-height:3.4rem;
+      }
+      .form-err{ display:none; color:var(--danger); font-weight:800; font-size:.88rem; margin-top:10px; }
+      .form-err.show{ display:block; }
+
+      .toast{
+        position:fixed; left:50%; bottom:104px; transform:translateX(-50%) translateY(20px);
+        background:var(--ink); color:#FFF3E2; font-weight:800; font-size:.92rem;
+        padding:11px 20px; border-radius:999px; z-index:60; opacity:0; pointer-events:none;
+        transition:opacity .25s ease, transform .25s ease; max-width:92vw; text-align:center;
+      }
+      .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+      .confetti-bit{ position:fixed; z-index:70; pointer-events:none; border-radius:3px; }
+
+      .loading-note{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:.9rem; margin-top:14px; }
+
+      @media (prefers-reduced-motion: reduce){
+        .bob,.bob2{ animation:none; }
+        .bar-fill{ transition:none; }
+        .sheet{ animation:none; }
+        .milestone.show{ animation:none; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- Reusable kawaii orange mascot. Ribbon color comes from --ribbon on the <svg> that uses it. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="mascot" viewBox="0 0 120 120">
+          <!-- arms -->
+          <ellipse cx="10" cy="76" rx="9" ry="7" fill="#FF9A44" transform="rotate(24 10 76)"/>
+          <ellipse cx="110" cy="76" rx="9" ry="7" fill="#FF9A44" transform="rotate(-24 110 76)"/>
+          <!-- body -->
+          <circle cx="60" cy="66" r="44" fill="#FF9A44"/>
+          <circle cx="60" cy="66" r="44" fill="none" stroke="#F27B21" stroke-width="3"/>
+          <ellipse cx="44" cy="48" rx="13" ry="8" fill="#FFB877" opacity=".8" transform="rotate(-18 44 48)"/>
+          <!-- leaf + stem -->
+          <path d="M60 24c0-6 3-10 8-12" stroke="#4E9B41" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M66 12c8-4 16-1 18 5-6 4-15 3-18-5z" fill="#6FBF5E" stroke="#4E9B41" stroke-width="2.5"/>
+          <!-- ribbon bow -->
+          <g fill="var(--ribbon,#EF6FA5)" stroke="rgba(0,0,0,.12)" stroke-width="1.5">
+            <path d="M44 26c-8-7-18-5-18 2 0 6 9 8 18 3z"/>
+            <path d="M76 26c8-7 18-5 18 2 0 6-9 8-18 3z"/>
+          </g>
+          <circle cx="60" cy="28" r="6" fill="var(--ribbon,#EF6FA5)" stroke="rgba(0,0,0,.12)" stroke-width="1.5"/>
+          <!-- face -->
+          <path d="M38 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M70 64q6-7 12 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <path d="M53 76q7 6 14 0" stroke="#7A4A21" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+          <circle cx="33" cy="74" r="6.5" fill="#FF9FB0" opacity=".85"/>
+          <circle cx="87" cy="74" r="6.5" fill="#FF9FB0" opacity=".85"/>
+          <!-- feet -->
+          <ellipse cx="42" cy="108" rx="10" ry="5" fill="#F27B21"/>
+          <ellipse cx="78" cy="108" rx="10" ry="5" fill="#F27B21"/>
+        </symbol>
+        <symbol id="slice" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="27" fill="#FFB066"/>
+          <circle cx="30" cy="30" r="22" fill="#FFF3E2"/>
+          <g fill="#FF9A44">
+            <path d="M30 30 L30 10 A20 20 0 0 1 47 20 Z"/>
+            <path d="M30 30 L49 24 A20 20 0 0 1 44 43 Z"/>
+            <path d="M30 30 L42 45 A20 20 0 0 1 22 47 Z"/>
+            <path d="M30 30 L20 48 A20 20 0 0 1 12 33 Z"/>
+            <path d="M30 30 L11 27 A20 20 0 0 1 16 14 Z"/>
+          </g>
+          <circle cx="30" cy="30" r="3.5" fill="#FFF3E2"/>
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="wrap">
+      <div class="topbar">
+        <span class="conn" id="connPill"><span class="dot"></span><span id="connText">Sedang menyambung…</span></span>
+        <button class="btn-gear" id="btnSettings" type="button">⚙️ Pengaturan</button>
+      </div>
+
+      <!-- Mascots holding hands -->
+      <div class="mascots" aria-hidden="true">
+        <svg viewBox="0 0 260 130">
+          <g class="bob">
+            <use href="#mascot" x="8" y="8" width="112" height="112" style="--ribbon:#4A90D9"/>
+          </g>
+          <!-- joined hands -->
+          <circle cx="130" cy="86" r="8" fill="#FF9A44" stroke="#F27B21" stroke-width="2.5"/>
+          <path d="M124 82c2 2 4 2 6 0M130 90c2-2 4-2 6 0" stroke="#F27B21" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+          <path d="M130 66c-2.2-2.8-6-1.5-6 1.4 0 2.6 3 4.3 6 6.1 3-1.8 6-3.5 6-6.1 0-2.9-3.8-4.2-6-1.4z" fill="#EF6FA5"/>
+          <g class="bob2">
+            <use href="#mascot" x="140" y="8" width="112" height="112" style="--ribbon:#EF6FA5"/>
+          </g>
+        </svg>
+      </div>
+
+      <h1 class="title">Celengan Berdua</h1>
+      <p class="goal-name" id="goalName">Tabungan Bersama</p>
+      <p class="goal-sub">tabungan bareng syahrullian &amp; prisqola 🍊</p>
+
+      <div class="card">
+        <div class="total-label">TOTAL TERKUMPUL</div>
+        <div class="total-big" id="totalBig">Rp 0</div>
+      </div>
+
+      <div class="card jar-zone">
+        <div class="jar-box" id="jarBox">
+          <svg viewBox="0 0 200 250" role="img" aria-label="Toples celengan jeruk">
+            <defs>
+              <clipPath id="jarClip">
+                <path d="M42 62 h116 v18 c10 8 14 18 14 32 v88 a26 26 0 0 1 -26 26 H54 a26 26 0 0 1 -26 -26 v-88 c0-14 4-24 14-32 z"/>
+              </clipPath>
+            </defs>
+            <!-- lid -->
+            <rect x="34" y="34" width="132" height="24" rx="12" fill="#FFB066" stroke="#F27B21" stroke-width="3"/>
+            <rect x="86" y="22" width="28" height="16" rx="8" fill="#6FBF5E" stroke="#4E9B41" stroke-width="2.5"/>
+            <!-- fill -->
+            <g clip-path="url(#jarClip)">
+              <rect x="0" y="226" width="200" height="0" id="jarFill" fill="#FF9A44"/>
+              <ellipse id="jarWave" cx="100" cy="226" rx="86" ry="9" fill="#FFB877"/>
+              <g id="jarSlices" opacity=".9"></g>
+            </g>
+            <!-- glass -->
+            <path d="M42 62 h116 v18 c10 8 14 18 14 32 v88 a26 26 0 0 1 -26 26 H54 a26 26 0 0 1 -26 -26 v-88 c0-14 4-24 14-32 z"
+                  fill="rgba(255,255,255,.14)" stroke="#E8B98A" stroke-width="4"/>
+            <path d="M46 96 q-6 40 0 84" stroke="rgba(255,255,255,.75)" stroke-width="7" fill="none" stroke-linecap="round"/>
+            <!-- jar face -->
+            <path d="M74 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M112 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path d="M92 132 q8 7 16 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <circle cx="66" cy="130" r="7" fill="#FF9FB0" opacity=".8"/>
+            <circle cx="134" cy="130" r="7" fill="#FF9FB0" opacity=".8"/>
+          </svg>
+        </div>
+        <div class="pct-big" id="pctBig"></div>
+        <div class="bar" id="barWrap"><div class="bar-fill" id="barFill"></div></div>
+        <div class="bar-line" id="barLine">Memuat…</div>
+        <div class="target-hint" id="targetHint" style="display:none">
+          Target belum diatur nih 🍊<br/>Atur nama tujuan &amp; targetnya lewat tombol <b>Pengaturan</b> di atas, biar progresnya kelihatan.
+        </div>
+        <div class="milestone" id="milestone"></div>
+      </div>
+
+      <div class="duo">
+        <div class="person blue">
+          <svg style="--ribbon:#4A90D9" aria-hidden="true"><use href="#mascot"/></svg>
+          <div class="pname">syahrullian</div>
+          <div class="ptotal" id="totalBlue">Rp 0</div>
+          <div class="pshare" id="shareBlue">0% dari total</div>
+        </div>
+        <div class="person pink">
+          <svg style="--ribbon:#EF6FA5" aria-hidden="true"><use href="#mascot"/></svg>
+          <div class="pname">prisqola</div>
+          <div class="ptotal" id="totalPink">Rp 0</div>
+          <div class="pshare" id="sharePink">0% dari total</div>
+        </div>
+      </div>
+
+      <h2 class="sec-title">Riwayat Nabung 📒</h2>
+      <div class="hist" id="histList"></div>
+      <p class="loading-note" id="loadingNote">Lagi ngambil data celengan dari awan… ☁️</p>
+
+      <footer>
+        Uang asli tetap di e-wallet kalian — web ini cuma buat mantau bareng 🍊<br/>
+        Nabung dikit-dikit, lama-lama jadi bukit jeruk.
+      </footer>
+    </div>
+
+    <div class="nabung-bar">
+      <div class="nabung-inner">
+        <button class="btn-nabung" id="btnNabung" type="button">+ Nabung 🍊</button>
+      </div>
+    </div>
+
+    <!-- Nabung sheet -->
+    <div class="overlay" id="nabungOverlay" role="dialog" aria-modal="true" aria-labelledby="nabungTitle">
+      <div class="sheet">
+        <h2 id="nabungTitle">Nabung dulu yuk! 🍊</h2>
+        <p class="sub">Catat setoran yang baru masuk ke e-wallet kalian.</p>
+        <label class="flabel" style="margin-top:0">Siapa yang nabung?</label>
+        <div class="who-toggle">
+          <button type="button" class="who-opt sel-blue" id="whoBlue" data-who="syahrullian">
+            <svg style="--ribbon:#4A90D9" aria-hidden="true"><use href="#mascot"/></svg>
+            syahrullian
+          </button>
+          <button type="button" class="who-opt" id="whoPink" data-who="prisqola">
+            <svg style="--ribbon:#EF6FA5" aria-hidden="true"><use href="#mascot"/></svg>
+            prisqola
+          </button>
+        </div>
+        <label class="flabel" for="amountInput">Jumlahnya berapa?</label>
+        <div class="money-wrap">
+          <span>Rp</span>
+          <input type="text" inputmode="numeric" id="amountInput" placeholder="0" autocomplete="off" />
+        </div>
+        <div class="chips">
+          <button type="button" class="chip" data-amt="10000">+10 rb</button>
+          <button type="button" class="chip" data-amt="20000">+20 rb</button>
+          <button type="button" class="chip" data-amt="50000">+50 rb</button>
+          <button type="button" class="chip" data-amt="100000">+100 rb</button>
+        </div>
+        <label class="flabel" for="noteInput">Catatan (boleh kosong)</label>
+        <input type="text" id="noteInput" placeholder="mis. gajian, sisa jajan, THR…" maxlength="80" />
+        <p class="form-err" id="nabungErr"></p>
+        <div class="sheet-actions">
+          <button type="button" class="btn-cancel" data-close="nabungOverlay">Batal</button>
+          <button type="button" class="btn-save" id="btnSaveNabung">Simpan 🍊</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings sheet -->
+    <div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+      <div class="sheet">
+        <h2 id="settingsTitle">Pengaturan ⚙️</h2>
+        <p class="sub">Nama tujuan &amp; target tabungan kalian berdua.</p>
+        <label class="flabel" for="goalInput" style="margin-top:0">Nama tujuan</label>
+        <input type="text" id="goalInput" placeholder="mis. Liburan Berdua" maxlength="60" />
+        <label class="flabel" for="targetInput">Target (Rp)</label>
+        <div class="money-wrap">
+          <span>Rp</span>
+          <input type="text" inputmode="numeric" id="targetInput" placeholder="0" autocomplete="off" />
+        </div>
+        <p class="form-err" id="settingsErr"></p>
+        <div class="sheet-actions">
+          <button type="button" class="btn-cancel" data-close="settingsOverlay">Batal</button>
+          <button type="button" class="btn-save" id="btnSaveSettings">Simpan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete confirm sheet -->
+    <div class="overlay" id="delOverlay" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+      <div class="sheet">
+        <h2 id="delTitle">Hapus catatan ini? 🗑️</h2>
+        <p class="sub" id="delDesc">Catatan setoran ini bakal hilang dari riwayat berdua.</p>
+        <div class="sheet-actions">
+          <button type="button" class="btn-cancel" data-close="delOverlay">Nggak jadi</button>
+          <button type="button" class="btn-save" id="btnConfirmDel" style="background:linear-gradient(180deg,#E87A72,#D9534A); box-shadow:0 4px 0 #A93A33">Iya, hapus</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script>
+      (function(){
+        "use strict";
+
+        var firebaseConfig = {
+          apiKey: "AIzaSyCFB69B8njagE_xKmD1-7XAWxFnj7SmKO0",
+          authDomain: "celengan-berdua.firebaseapp.com",
+          databaseURL: "https://celengan-berdua-default-rtdb.asia-southeast1.firebasedatabase.app",
+          projectId: "celengan-berdua",
+          storageBucket: "celengan-berdua.firebasestorage.app",
+          messagingSenderId: "483478762652",
+          appId: "1:483478762652:web:9f649e3b69d67463ed6959"
+        };
+        var DATA_PATH = "tabungan/jb-18673f7bc9b0b24b";
+
+        var rpFmt = new Intl.NumberFormat("id-ID");
+        var dateFmt = new Intl.DateTimeFormat("id-ID", { day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" });
+        function rp(n){ return "Rp " + rpFmt.format(Math.round(n || 0)); }
+        function $(id){ return document.getElementById(id); }
+        var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+        var state = {
+          goalName: "Tabungan Bersama",
+          target: 0,
+          entries: {},        // id -> entry
+          prevPct: null,      // percentage before the latest snapshot (for milestone crossing)
+          loaded: false,
+          who: "syahrullian",
+          delId: null
+        };
+
+        /* ---------- Toast ---------- */
+        var toastTimer = null;
+        function toast(msg){
+          var t = $("toast");
+          t.textContent = msg;
+          t.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function(){ t.classList.remove("show"); }, 2600);
+        }
+
+        /* ---------- Confetti ---------- */
+        function confettiBurst(count, big){
+          if (reduceMotion) return;
+          var colors = ["#FF8A3D","#FFB066","#EF6FA5","#6FBF5E","#4A90D9","#FFD166"];
+          var cx = window.innerWidth / 2, cy = window.innerHeight * (big ? 0.35 : 0.45);
+          for (var i = 0; i < count; i++){
+            var bit = document.createElement("div");
+            bit.className = "confetti-bit";
+            var size = 6 + Math.random() * 7;
+            bit.style.width = size + "px";
+            bit.style.height = size * (Math.random() > .5 ? 1 : .45) + "px";
+            bit.style.background = colors[i % colors.length];
+            bit.style.left = cx + "px";
+            bit.style.top = cy + "px";
+            bit.style.borderRadius = Math.random() > .5 ? "50%" : "3px";
+            document.body.appendChild(bit);
+            var dx = (Math.random() - .5) * (big ? 560 : 320);
+            var dy = 120 + Math.random() * (big ? 420 : 260);
+            var rot = (Math.random() - .5) * 720;
+            var anim = bit.animate([
+              { transform: "translate(0,0) rotate(0deg)", opacity: 1 },
+              { transform: "translate(" + dx + "px," + dy + "px) rotate(" + rot + "deg)", opacity: 0 }
+            ], { duration: 1100 + Math.random() * 700, easing: "cubic-bezier(.17,.67,.35,1)" });
+            (function(el, a){ a.onfinish = function(){ el.remove(); }; })(bit, anim);
+          }
+        }
+
+        /* ---------- Orange drop into jar ---------- */
+        function dropOrange(){
+          if (reduceMotion) return;
+          var box = $("jarBox");
+          var el = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          el.setAttribute("class", "drop-orange");
+          el.setAttribute("viewBox", "0 0 60 60");
+          el.innerHTML = '<use href="#slice"/>';
+          box.appendChild(el);
+          var anim = el.animate([
+            { transform: "translateY(-46px) scale(.6)", opacity: 0 },
+            { transform: "translateY(6px) scale(1)", opacity: 1, offset: .55 },
+            { transform: "translateY(52px) scale(.92)", opacity: 1, offset: .8 },
+            { transform: "translateY(64px) scale(.8)", opacity: 0 }
+          ], { duration: 750, easing: "cubic-bezier(.3,.7,.4,1)" });
+          anim.onfinish = function(){ el.remove(); };
+        }
+
+        /* ---------- Rendering ---------- */
+        function totals(){
+          var blue = 0, pink = 0;
+          Object.keys(state.entries).forEach(function(id){
+            var e = state.entries[id];
+            if (!e || typeof e.amount !== "number") return;
+            if (e.who === "prisqola") pink += e.amount; else blue += e.amount;
+          });
+          return { blue: blue, pink: pink, all: blue + pink };
+        }
+
+        function render(){
+          var t = totals();
+          var target = state.target || 0;
+          var hasTarget = target > 0;
+          var pct = hasTarget ? Math.min(100, (t.all / target) * 100) : null;
+
+          $("goalName").textContent = state.goalName || "Tabungan Bersama";
+          $("totalBig").textContent = rp(t.all);
+
+          // Jar fill: inner area y from 226 (bottom) up to 84 (top) => height 142
+          var fillH = pct === null ? 0 : (pct / 100) * 142;
+          var fillTop = 226 - fillH;
+          var fill = $("jarFill");
+          fill.setAttribute("y", fillTop);
+          fill.setAttribute("height", fillH);
+          var wave = $("jarWave");
+          wave.setAttribute("cy", fillTop);
+          wave.setAttribute("opacity", fillH > 2 ? "1" : "0");
+          // decorative slices inside the fill
+          var slices = $("jarSlices");
+          slices.innerHTML = "";
+          if (fillH > 26){
+            var spots = [[62,196],[100,208],[138,192],[80,168],[122,164]];
+            var shown = Math.max(1, Math.round(fillH / 30));
+            for (var i = 0; i < Math.min(shown, spots.length); i++){
+              var u = document.createElementNS("http://www.w3.org/2000/svg", "use");
+              u.setAttribute("href", "#slice");
+              u.setAttribute("x", spots[i][0] - 17);
+              u.setAttribute("y", spots[i][1] - 17);
+              u.setAttribute("width", "34");
+              u.setAttribute("height", "34");
+              slices.appendChild(u);
+            }
+          }
+
+          if (hasTarget){
+            $("pctBig").textContent = (Math.round(pct * 10) / 10).toString().replace(".", ",") + "%";
+            $("barWrap").style.display = "";
+            $("barFill").style.width = pct + "%";
+            $("targetHint").style.display = "none";
+            var sisa = Math.max(0, target - t.all);
+            $("barLine").innerHTML = rp(t.all) + " dari " + rp(target) +
+              (sisa > 0 ? '<span class="sisa">Kurang ' + rp(sisa) + " lagi buat sampai tujuan 💪</span>"
+                        : '<span class="sisa">Targetnya udah kesampaian! 🥳</span>');
+          } else {
+            $("pctBig").textContent = "";
+            $("barWrap").style.display = "none";
+            $("barFill").style.width = "0%";
+            $("targetHint").style.display = "";
+            $("barLine").textContent = t.all > 0 ? "Udah kekumpul " + rp(t.all) + " — tinggal atur targetnya 🍊" : "Belum ada setoran. Yuk nabung pertama kali!";
+          }
+
+          $("totalBlue").textContent = rp(t.blue);
+          $("totalPink").textContent = rp(t.pink);
+          $("shareBlue").textContent = (t.all > 0 ? Math.round(t.blue / t.all * 100) : 0) + "% dari total";
+          $("sharePink").textContent = (t.all > 0 ? Math.round(t.pink / t.all * 100) : 0) + "% dari total";
+
+          renderHistory();
+          checkMilestones(pct);
+        }
+
+        function renderHistory(){
+          var list = $("histList");
+          list.innerHTML = "";
+          var ids = Object.keys(state.entries).sort(function(a, b){
+            return (state.entries[b].ts || 0) - (state.entries[a].ts || 0);
+          });
+          if (!ids.length){
+            var empty = document.createElement("div");
+            empty.className = "empty";
+            empty.textContent = "Masih kosong 🍊 Setoran pertama kalian bakal muncul di sini.";
+            list.appendChild(empty);
+            return;
+          }
+          ids.forEach(function(id){
+            var e = state.entries[id];
+            var isPink = e.who === "prisqola";
+            var row = document.createElement("div");
+            row.className = "row";
+
+            var ava = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            ava.setAttribute("class", "ava");
+            ava.setAttribute("style", "--ribbon:" + (isPink ? "#EF6FA5" : "#4A90D9"));
+            ava.innerHTML = '<use href="#mascot"/>';
+            row.appendChild(ava);
+
+            var mid = document.createElement("div");
+            mid.className = "mid";
+            var who = document.createElement("div");
+            who.className = "who " + (isPink ? "pink" : "blue");
+            who.textContent = isPink ? "prisqola" : "syahrullian";
+            mid.appendChild(who);
+            if (e.note){
+              var note = document.createElement("div");
+              note.className = "note";
+              note.textContent = e.note;
+              mid.appendChild(note);
+            }
+            var when = document.createElement("div");
+            when.className = "when";
+            when.textContent = e.ts ? dateFmt.format(new Date(e.ts)) : "";
+            mid.appendChild(when);
+            row.appendChild(mid);
+
+            var amt = document.createElement("div");
+            amt.className = "amt";
+            amt.textContent = "+" + rp(e.amount);
+            row.appendChild(amt);
+
+            var del = document.createElement("button");
+            del.type = "button";
+            del.className = "btn-del";
+            del.setAttribute("aria-label", "Hapus catatan ini");
+            del.textContent = "🗑️";
+            del.addEventListener("click", function(){ openDelete(id, e); });
+            row.appendChild(del);
+
+            list.appendChild(row);
+          });
+        }
+
+        /* ---------- Milestones ---------- */
+        function checkMilestones(pct){
+          var banner = $("milestone");
+          if (pct === null){ banner.className = "milestone"; return; }
+          if (pct >= 100){
+            banner.textContent = "TUJUAN TERCAPAI! 🎉🍊 Kalian berdua luar biasa!";
+            banner.className = "milestone show done";
+          }
+          if (!state.loaded){ state.prevPct = pct; return; }
+          var prev = state.prevPct;
+          state.prevPct = pct;
+          if (prev === null || prev === undefined) return;
+          var steps = [25, 50, 75, 100];
+          for (var i = 0; i < steps.length; i++){
+            if (prev < steps[i] && pct >= steps[i]){
+              if (steps[i] === 100){
+                confettiBurst(90, true);
+                toast("TUJUAN TERCAPAI! 🎉 Selamat berdua!");
+              } else {
+                banner.textContent = "Yeay! Udah " + steps[i] + "% jalan menuju tujuan! 🍊 Terus semangat berdua ya~";
+                banner.className = "milestone show";
+                confettiBurst(36, false);
+                toast("Milestone " + steps[i] + "% tercapai! 🍊");
+              }
+              break;
+            }
+          }
+          if (pct < 100 && banner.classList.contains("done")){
+            banner.className = "milestone";
+          }
+        }
+
+        /* ---------- Sheets ---------- */
+        function openSheet(id){ $(id).classList.add("open"); }
+        function closeSheet(id){ $(id).classList.remove("open"); }
+        document.querySelectorAll("[data-close]").forEach(function(btn){
+          btn.addEventListener("click", function(){ closeSheet(btn.getAttribute("data-close")); });
+        });
+        document.querySelectorAll(".overlay").forEach(function(ov){
+          ov.addEventListener("click", function(ev){ if (ev.target === ov) ov.classList.remove("open"); });
+        });
+
+        /* ---------- Money inputs ---------- */
+        function digitsOnly(v){ return (v || "").replace(/[^\d]/g, ""); }
+        function attachMoneyFormat(input){
+          input.addEventListener("input", function(){
+            var d = digitsOnly(input.value);
+            input.value = d ? rpFmt.format(parseInt(d, 10)) : "";
+          });
+        }
+        attachMoneyFormat($("amountInput"));
+        attachMoneyFormat($("targetInput"));
+        function moneyVal(input){
+          var d = digitsOnly(input.value);
+          return d ? parseInt(d, 10) : 0;
+        }
+        document.querySelectorAll(".chip").forEach(function(chip){
+          chip.addEventListener("click", function(){
+            var cur = moneyVal($("amountInput"));
+            var next = cur + parseInt(chip.getAttribute("data-amt"), 10);
+            $("amountInput").value = rpFmt.format(next);
+          });
+        });
+
+        /* ---------- Who toggle ---------- */
+        function setWho(who){
+          state.who = who;
+          $("whoBlue").className = "who-opt" + (who === "syahrullian" ? " sel-blue" : "");
+          $("whoPink").className = "who-opt" + (who === "prisqola" ? " sel-pink" : "");
+        }
+        $("whoBlue").addEventListener("click", function(){ setWho("syahrullian"); });
+        $("whoPink").addEventListener("click", function(){ setWho("prisqola"); });
+
+        /* ---------- Delete ---------- */
+        function openDelete(id, e){
+          state.delId = id;
+          $("delDesc").textContent = "Hapus setoran " + rp(e.amount) + " dari " + (e.who === "prisqola" ? "prisqola" : "syahrullian") + (e.note ? " (“" + e.note + "”)" : "") + "? Catatan ini bakal hilang dari riwayat berdua.";
+          openSheet("delOverlay");
+        }
+
+        /* ---------- Firebase ---------- */
+        var ref = null;
+        function setConn(mode, text){
+          var pill = $("connPill");
+          pill.className = "conn " + mode;
+          $("connText").textContent = text;
+        }
+
+        function initFirebase(){
+          if (typeof firebase === "undefined" || !firebase.database){
+            setConn("off", "Gagal memuat — cek koneksi internet");
+            $("loadingNote").textContent = "Koneksi ke database awan gagal dimuat. Coba muat ulang halamannya ya 🙏";
+            return;
+          }
+          firebase.initializeApp(firebaseConfig);
+          var db = firebase.database();
+          ref = db.ref(DATA_PATH);
+
+          db.ref(".info/connected").on("value", function(snap){
+            if (snap.val() === true){
+              setConn("on", "Tersambung • sinkron berdua ☁️");
+            } else {
+              setConn("off", state.loaded ? "Koneksi putus — lagi nyambung lagi…" : "Sedang menyambung…");
+            }
+          });
+
+          ref.on("value", function(snap){
+            var val = snap.val();
+            if (val === null){
+              // First run: seed the shared pot.
+              ref.set({ goalName: "Tabungan Bersama", target: 0, entries: {} }).catch(function(){});
+              state.goalName = "Tabungan Bersama";
+              state.target = 0;
+              state.entries = {};
+            } else {
+              state.goalName = typeof val.goalName === "string" && val.goalName ? val.goalName : "Tabungan Bersama";
+              state.target = typeof val.target === "number" ? val.target : 0;
+              state.entries = val.entries || {};
+            }
+            var firstLoad = !state.loaded;
+            state.loaded = true;
+            $("loadingNote").style.display = "none";
+            render();
+            if (firstLoad) state.prevPct = (state.target > 0) ? Math.min(100, totals().all / state.target * 100) : null;
+          }, function(){
+            setConn("off", "Belum bisa tersambung — cek internet ya");
+            $("loadingNote").textContent = "Hmm, datanya belum bisa diambil dari awan. Pastikan internet nyala, nanti halaman ini nyambung sendiri kok 🍊";
+          });
+        }
+
+        /* ---------- Actions ---------- */
+        $("btnNabung").addEventListener("click", function(){
+          $("nabungErr").classList.remove("show");
+          openSheet("nabungOverlay");
+          setTimeout(function(){ $("amountInput").focus(); }, 250);
+        });
+
+        $("btnSaveNabung").addEventListener("click", function(){
+          var err = $("nabungErr");
+          var amount = moneyVal($("amountInput"));
+          if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
+          if (!amount || amount <= 0){ err.textContent = "Isi dulu jumlahnya ya, minimal Rp 1 🍊"; err.classList.add("show"); return; }
+          var btn = $("btnSaveNabung");
+          btn.disabled = true;
+          btn.textContent = "Menyimpan…";
+          ref.child("entries").push({
+            who: state.who,
+            amount: amount,
+            note: $("noteInput").value.trim(),
+            ts: Date.now()
+          }).then(function(){
+            btn.disabled = false;
+            btn.textContent = "Simpan 🍊";
+            $("amountInput").value = "";
+            $("noteInput").value = "";
+            closeSheet("nabungOverlay");
+            dropOrange();
+            confettiBurst(22, false);
+            toast("Yeay! " + rp(amount) + " masuk celengan 🍊");
+            document.querySelector(".jar-zone").scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+          }).catch(function(){
+            btn.disabled = false;
+            btn.textContent = "Simpan 🍊";
+            err.textContent = "Gagal nyimpan — koneksinya lagi putus. Coba lagi ya 🙏";
+            err.classList.add("show");
+          });
+        });
+
+        $("btnSettings").addEventListener("click", function(){
+          $("goalInput").value = state.goalName || "";
+          $("targetInput").value = state.target > 0 ? rpFmt.format(state.target) : "";
+          $("settingsErr").classList.remove("show");
+          openSheet("settingsOverlay");
+        });
+
+        $("btnSaveSettings").addEventListener("click", function(){
+          var err = $("settingsErr");
+          if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
+          var name = $("goalInput").value.trim() || "Tabungan Bersama";
+          var target = moneyVal($("targetInput"));
+          var btn = $("btnSaveSettings");
+          btn.disabled = true;
+          ref.update({ goalName: name, target: target }).then(function(){
+            btn.disabled = false;
+            closeSheet("settingsOverlay");
+            toast("Pengaturan disimpan ☁️");
+          }).catch(function(){
+            btn.disabled = false;
+            err.textContent = "Gagal nyimpan — koneksinya lagi putus. Coba lagi ya 🙏";
+            err.classList.add("show");
+          });
+        });
+
+        $("btnConfirmDel").addEventListener("click", function(){
+          if (!ref || !state.delId) return;
+          var btn = $("btnConfirmDel");
+          btn.disabled = true;
+          ref.child("entries/" + state.delId).remove().then(function(){
+            btn.disabled = false;
+            state.delId = null;
+            closeSheet("delOverlay");
+            toast("Catatan dihapus 🗑️");
+          }).catch(function(){
+            btn.disabled = false;
+            toast("Gagal menghapus — coba lagi ya 🙏");
+          });
+        });
+
+        initFirebase();
+      })();
+    </script>
+  </body>
+</html>
