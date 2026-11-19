@@ -198,6 +198,11 @@
       /* ---------- Rincian Tujuan (breakdown) ---------- */
       .breakdown-title{ display:flex; align-items:center; gap:9px; }
       .breakdown-title::before{ content:""; width:20px; height:6px; border-radius:999px; background:var(--orange-deep); flex:none; }
+      .pot-note{ color:var(--ink-soft); font-weight:700; font-size:.86rem; margin:4px 2px 0; }
+      .br-badge{
+        display:inline-block; margin-top:4px; font-size:.72rem; font-weight:800;
+        background:var(--leaf); color:#fff; padding:2px 9px; border-radius:999px;
+      }
       .breakdown-list{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
       .breakdown-row{
         display:flex; align-items:flex-start; gap:12px; width:100%; text-align:left;
@@ -472,6 +477,7 @@
       </div>
 
       <h2 class="sec-title breakdown-title">Rincian Tujuan</h2>
+      <p class="pot-note">Satu pot bersama untuk semua tujuan 🍊 — semua setoran ngisi pot yang sama, tiap tujuan dihitung dari pot itu.</p>
       <div class="breakdown-list" id="breakdownList"></div>
 
       <h2 class="sec-title" id="histTitle">Riwayat Nabung 📒</h2>
@@ -494,9 +500,7 @@
     <div class="overlay" id="nabungOverlay" role="dialog" aria-modal="true" aria-labelledby="nabungTitle">
       <div class="sheet">
         <h2 id="nabungTitle">Nabung dulu yuk! 🍊</h2>
-        <p class="sub">Catat setoran yang baru masuk ke e-wallet kalian.</p>
-        <label class="flabel" for="nabungGoalSelect" style="margin-top:0">Buat tujuan apa?</label>
-        <select id="nabungGoalSelect" class="goal-select"></select>
+        <p class="sub">Catat setoran yang baru masuk ke e-wallet kalian. Setorannya masuk ke pot bersama buat semua tujuan 🍊</p>
         <label class="flabel">Siapa yang nabung?</label>
         <div class="who-toggle">
           <button type="button" class="who-opt sel-blue" id="whoBlue" data-who="syahrullian">
@@ -548,7 +552,7 @@
         </div>
         <button type="button" class="btn-add-goal" id="btnOpenAddGoalFromSettings">+ Tambah Tujuan Baru 🍊</button>
         <button type="button" class="btn-danger-outline" id="btnOpenDeleteGoal">🗑️ Hapus Tujuan Aktif Ini</button>
-        <p class="sub" style="margin-top:10px; margin-bottom:0">Menghapus tujuan juga menghapus semua riwayat nabung di tujuan itu.</p>
+        <p class="sub" style="margin-top:10px; margin-bottom:0">Menghapus tujuan nggak menghapus catatan nabung — semua setoran tetap aman di pot bersama.</p>
       </div>
     </div>
 
@@ -556,7 +560,7 @@
     <div class="overlay" id="addGoalOverlay" role="dialog" aria-modal="true" aria-labelledby="addGoalTitle">
       <div class="sheet">
         <h2 id="addGoalTitle">Tujuan Baru 🍊</h2>
-        <p class="sub">Bikin tujuan nabung baru, toplesnya terpisah dari tujuan lain.</p>
+        <p class="sub">Bikin tujuan nabung baru. Targetnya dihitung dari pot bersama yang sama, jadi nggak perlu nabung terpisah-pisah.</p>
         <label class="flabel" for="newGoalName" style="margin-top:0">Nama tujuan</label>
         <input type="text" id="newGoalName" placeholder="mis. Dana Nikah, Liburan, Darurat…" maxlength="60" />
         <label class="flabel" for="newGoalTarget">Target (Rp)</label>
@@ -665,10 +669,12 @@
           return { blue: blue, pink: pink, all: blue+pink };
         }
         function pctForGoal(gid){
+          // Shared pot model: every goal is measured against the ONE pot
+          // (sum of ALL entries, regardless of any goalId on old entries).
           var g = state.goals[gid];
           if (!g || !(g.target>0)) return null;
-          var t = sumEntries(entriesForGoal(gid));
-          return Math.min(100, (t.all / g.target) * 100);
+          var pot = totalsAll();
+          return Math.min(100, (pot.all / g.target) * 100);
         }
         function totalTargetAll(){
           var sum = 0;
@@ -781,12 +787,14 @@
             wrap.appendChild(empty);
             return;
           }
+          var potAll = totalsAll().all;
           ids.forEach(function(gid){
             var g = state.goals[gid] || {};
-            var sums = sumEntries(entriesForGoal(gid));
-            var rawPct = combined > 0 ? (sums.all / combined) * 100 : 0;
+            var hasTarget = typeof g.target === "number" && g.target > 0;
+            var rawPct = hasTarget ? (potAll / g.target) * 100 : 0;
             var pct = Math.min(100, Math.max(0, rawPct));
-            var pctText = combined > 0 ? (Math.round(pct * 10) / 10).toString().replace(".", ",") + "%" : "0%";
+            var pctText = hasTarget ? (Math.round(pct * 10) / 10).toString().replace(".", ",") + "%" : "—";
+            var achieved = hasTarget && potAll >= g.target;
 
             var row = document.createElement("button");
             row.type = "button";
@@ -818,9 +826,16 @@
             var sub = document.createElement("span");
             sub.className = "br-sub";
             sub.style.display = "block";
-            if (g.target > 0) sub.textContent = rp(sums.all) + " terkumpul dari target " + rp(g.target);
-            else sub.textContent = rp(sums.all) + " terkumpul • target belum diatur";
+            if (hasTarget) sub.textContent = "Pot bersama " + rp(potAll) + " • target " + rp(g.target);
+            else sub.textContent = "Pot bersama " + rp(potAll) + " • target belum diatur";
             main.appendChild(sub);
+
+            if (achieved){
+              var badge = document.createElement("span");
+              badge.className = "br-badge";
+              badge.textContent = "Tercapai 🎉";
+              main.appendChild(badge);
+            }
 
             var bar = document.createElement("span");
             bar.className = "br-bar";
@@ -874,20 +889,6 @@
           add.textContent = "+ Tujuan";
           add.addEventListener("click", function(){ openAddGoal(); });
           wrap.appendChild(add);
-          // sync nabung selector
-          var sel = $("nabungGoalSelect");
-          if (sel){
-            var cur = sel.value;
-            sel.innerHTML = "";
-            ids.forEach(function(gid){
-              var opt = document.createElement("option");
-              opt.value = gid;
-              opt.textContent = state.goals[gid].name || "Tabungan Bersama";
-              sel.appendChild(opt);
-            });
-            if (cur && state.goals[cur]) sel.value = cur;
-            else if (state.activeGoalId) sel.value = state.activeGoalId;
-          }
         }
 
         function render(){
@@ -901,7 +902,7 @@
           var goalCount = Object.keys(state.goals).length || 1;
 
           renderGoalSwitcher();
-          $("histTitle").textContent = "Riwayat Nabung — " + activeGoalName() + " 📒";
+          $("histTitle").textContent = "Riwayat Nabung 📒";
           $("goalName").textContent = "Total Semua Tujuan";
           $("totalBig").textContent = rp(allT.all);
           var subEl = $("totalSub");
@@ -912,10 +913,10 @@
           var agLine = $("activeGoalLine");
           if (agLine){
             if (activeTargetVal > 0){
-              agLine.innerHTML = "Tujuan aktif: <b></b> — " + rp(tActive.all) + " / " + rp(activeTargetVal) + " (" + fmtPct(activePct) + ")";
+              agLine.innerHTML = "Tujuan aktif: <b></b> — pot bersama " + rp(allT.all) + " / " + rp(activeTargetVal) + " (" + fmtPct(activePct) + ")";
               agLine.querySelector("b").textContent = activeGoalName();
             } else {
-              agLine.innerHTML = "Tujuan aktif: <b></b> — " + rp(tActive.all) + " terkumpul • target belum diatur";
+              agLine.innerHTML = "Tujuan aktif: <b></b> — pot bersama " + rp(allT.all) + " terkumpul • target belum diatur";
               agLine.querySelector("b").textContent = activeGoalName();
             }
           }
@@ -978,14 +979,15 @@
         function renderHistory(){
           var list = $("histList");
           list.innerHTML = "";
-          var activeEntries = entriesForGoal(state.activeGoalId);
-          var ids = Object.keys(activeEntries).sort(function(a, b){
-            return (activeEntries[b].ts || 0) - (activeEntries[a].ts || 0);
+          // Shared pot: history is ONE list of all entries, not filtered by goal.
+          var allEntries = state.entries;
+          var ids = Object.keys(allEntries).sort(function(a, b){
+            return (allEntries[b].ts || 0) - (allEntries[a].ts || 0);
           });
           if (!ids.length){
             var empty = document.createElement("div");
             empty.className = "empty";
-            empty.textContent = "Masih kosong buat tujuan “" + activeGoalName() + "” 🍊 Setoran pertama buat tujuan ini bakal muncul di sini.";
+            empty.textContent = "Masih kosong 🍊 Setoran pertama ke pot bersama bakal muncul di sini.";
             list.appendChild(empty);
             return;
           }
@@ -1007,10 +1009,6 @@
             who.className = "who " + (isPink ? "pink" : "blue");
             who.textContent = isPink ? "prisqola" : "syahrullian";
             mid.appendChild(who);
-            var gtag = document.createElement("span");
-            gtag.className = "gtag";
-            gtag.textContent = activeGoalName();
-            mid.appendChild(gtag);
             if (e.note){
               var note = document.createElement("div");
               note.className = "note";
@@ -1192,22 +1190,12 @@
               state.prevActiveId = state.activeGoalId;
               return;
             }
-            // --- Also stamp any entries missing goalId (safety, e.g. partial migration) ---
+            // Shared pot: entries count toward the pot whether or not they carry a goalId.
             if (val.goals){
               state.goals = val.goals || {};
               var ids = goalIdsSorted();
               state.activeGoalId = (val.activeGoalId && val.goals[val.activeGoalId]) ? val.activeGoalId : (ids[0] || null);
               state.entries = val.entries || {};
-              // If some entries lack goalId, stamp them with first goal once
-              var needsStamp = Object.keys(state.entries).some(function(eid){ return !state.entries[eid].goalId; });
-              if (needsStamp && state.activeGoalId && !state.migrating){
-                state.migrating = true;
-                var updates = {};
-                Object.keys(state.entries).forEach(function(eid){
-                  if (!state.entries[eid].goalId) updates["entries/" + eid + "/goalId"] = state.activeGoalId;
-                });
-                ref.update(updates).then(function(){ state.migrating = false; }).catch(function(){ state.migrating = false; });
-              }
             } else {
               // goals missing but no old fields (edge) — treat as empty goals
               state.goals = {}; state.activeGoalId = null; state.entries = val.entries || {};
@@ -1240,9 +1228,6 @@
         /* ---------- Actions ---------- */
         $("btnNabung").addEventListener("click", function(){
           $("nabungErr").classList.remove("show");
-          // default selector to active goal
-          var sel = $("nabungGoalSelect");
-          if (sel && state.activeGoalId) sel.value = state.activeGoalId;
           openSheet("nabungOverlay");
           setTimeout(function(){ $("amountInput").focus(); }, 250);
         });
@@ -1252,10 +1237,7 @@
           var amount = moneyVal($("amountInput"));
           if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
           if (!amount || amount <= 0){ err.textContent = "Isi dulu jumlahnya ya, minimal Rp 1 🍊"; err.classList.add("show"); return; }
-          var chosenGoal = ($("nabungGoalSelect") && $("nabungGoalSelect").value) ? $("nabungGoalSelect").value : state.activeGoalId;
-          if (!chosenGoal || !state.goals[chosenGoal]){ err.textContent = "Pilih dulu tujuannya ya 🍊"; err.classList.add("show"); return; }
-          // If saving to a different goal than active, switch active so user sees it fill
-          var shouldSwitch = chosenGoal !== state.activeGoalId;
+          // Shared pot: a deposit goes into the one pot — no goal choice.
           var btn = $("btnSaveNabung");
           btn.disabled = true;
           btn.textContent = "Menyimpan…";
@@ -1263,10 +1245,8 @@
             who: state.who,
             amount: amount,
             note: $("noteInput").value.trim(),
-            ts: Date.now(),
-            goalId: chosenGoal
+            ts: Date.now()
           });
-          if (shouldSwitch) pushPromise = pushPromise.then(function(){ return ref.update({ activeGoalId: chosenGoal }); });
           pushPromise.then(function(){
             btn.disabled = false;
             btn.textContent = "Simpan 🍊";
@@ -1345,8 +1325,7 @@
         });
 
         $("btnOpenDeleteGoal").addEventListener("click", function(){
-          var count = Object.keys(entriesForGoal(state.activeGoalId)).length;
-          $("delGoalDesc").textContent = "Hapus tujuan “" + activeGoalName() + "” beserta " + count + " catatan nabung di dalamnya? Ini nggak bisa dibalikin. Kalau ini tujuan terakhir, bakal dibuatkan tujuan kosong baru.";
+          $("delGoalDesc").textContent = "Hapus tujuan “" + activeGoalName() + "”? Catatan nabungnya nggak ikut kehapus — semua setoran tetap aman di pot bersama. Ini nggak bisa dibalikin. Kalau ini tujuan terakhir, bakal dibuatkan tujuan kosong baru.";
           closeSheet("settingsOverlay");
           setTimeout(function(){ openSheet("delGoalOverlay"); }, 120);
         });
@@ -1359,9 +1338,7 @@
           var remaining = goalIdsSorted().filter(function(id){ return id !== gidToDel; });
           var updates = {};
           updates["goals/" + gidToDel] = null;
-          Object.keys(state.entries).forEach(function(eid){
-            if (state.entries[eid].goalId === gidToDel) updates["entries/" + eid] = null;
-          });
+          // Shared pot: entries belong to the pot, NOT to a goal — never delete them here.
           var promise;
           if (remaining.length === 0){
             var newId = ref.child("goals").push().key;
