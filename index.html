@@ -67,11 +67,22 @@
       }
       .btn-gear:active{ transform:scale(.96); }
 
-      .mascots{ display:flex; justify-content:center; align-items:flex-end; margin-top:6px; }
+      .mascots{ display:flex; justify-content:center; align-items:flex-end; margin-top:6px; position:relative; }
       .mascots svg{ width:min(300px,78vw); height:auto; display:block; }
-      .bob{ animation:bob 3.2s ease-in-out infinite; transform-origin:50% 90%; }
-      .bob2{ animation:bob 3.2s ease-in-out .5s infinite; transform-origin:50% 90%; }
-      @keyframes bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-6px) } }
+      .bob{ animation:bob 2.8s ease-in-out infinite; transform-origin:50% 92%; transform-box:fill-box; }
+      .bob2{ animation:bob 2.8s ease-in-out .45s infinite; transform-origin:50% 92%; transform-box:fill-box; }
+      @keyframes bob{
+        0%,100%{ transform:translateY(0) scale(1,1) }
+        30%{ transform:translateY(-10px) scale(.97,1.04) }
+        55%{ transform:translateY(0) scale(1.05,.93) }
+        72%{ transform:translateY(-3px) scale(1,1) }
+      }
+      .heart-beat{ transform-box:fill-box; transform-origin:50% 50%; animation:heartbeat 1.7s ease-in-out infinite; }
+      @keyframes heartbeat{ 0%,100%{ transform:scale(1) } 22%{ transform:scale(1.3) } 42%{ transform:scale(1.02) } 60%{ transform:scale(1.22) } }
+      .float-star{ position:absolute; pointer-events:none; animation:starFloat 3.4s ease-in-out infinite; line-height:1; }
+      .float-star.s1{ left:10%; top:2px; font-size:21px; color:#F2A03D; }
+      .float-star.s2{ right:9%; top:30px; font-size:15px; color:#EF6FA5; animation-delay:1.3s; }
+      @keyframes starFloat{ 0%,100%{ transform:translateY(0) rotate(0deg); opacity:.5 } 50%{ transform:translateY(-10px) rotate(26deg); opacity:1 } }
 
       h1.title{
         font-family:"Baloo 2",cursive; font-weight:800; text-align:center;
@@ -92,8 +103,9 @@
         flex:none; display:inline-flex; align-items:center; gap:8px;
         background:#fff; border:2px solid var(--line); border-radius:999px;
         padding:7px 12px 7px 8px; font-weight:800; font-size:.88rem; color:var(--ink);
-        max-width:210px;
+        max-width:210px; transition:transform .15s ease, box-shadow .2s ease, background .2s ease;
       }
+      .goal-chip:active{ transform:scale(.94); }
       .goal-chip .gname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
       .goal-chip .gpct{
         flex:none; min-width:42px; height:26px; padding:0 7px; border-radius:999px;
@@ -152,19 +164,39 @@
         position:absolute; left:50%; top:-8px; width:34px; height:34px; margin-left:-17px;
         pointer-events:none; z-index:3;
       }
+      /* Jar juice: smooth fill rise, sloshing surface, rising bubbles, blinking face */
+      #jarFill{ transition:y .9s cubic-bezier(.22,1,.36,1), height .9s cubic-bezier(.22,1,.36,1); }
+      #jarWave{ transition:cy .9s cubic-bezier(.22,1,.36,1); animation:slosh 3s ease-in-out infinite; }
+      @keyframes slosh{ 0%,100%{ transform:translateX(-7px) } 50%{ transform:translateX(7px) } }
+      .bubble{ opacity:0; animation:rise 3.8s ease-in infinite; }
+      .bubble.b2{ animation-delay:1.2s; }
+      .bubble.b3{ animation-delay:2.1s; }
+      .bubble.b4{ animation-delay:2.9s; }
+      @keyframes rise{ 0%{ transform:translateY(0); opacity:0 } 14%{ opacity:.8 } 82%{ opacity:.55 } 100%{ transform:translateY(-100px); opacity:0 } }
+      .jar-eye{ transform-box:fill-box; transform-origin:50% 50%; animation:blink 4.4s ease-in-out infinite; }
+      .pct-big.pop{ animation:pctPop .5s cubic-bezier(.34,1.56,.64,1); }
+      @keyframes pctPop{ 0%{ transform:scale(1) } 40%{ transform:scale(1.22) } 100%{ transform:scale(1) } }
       .pct-big{
         font-family:"Baloo 2",cursive; font-weight:800; font-size:1.9rem; color:var(--orange-deep);
         margin-top:2px; line-height:1;
       }
       .bar{
         width:100%; height:26px; background:var(--orange-pale); border:2px solid var(--line);
-        border-radius:999px; overflow:hidden; margin-top:12px;
+        border-radius:999px; overflow:hidden; margin-top:12px; position:relative;
       }
+      .bar::after{
+        content:""; position:absolute; inset:0; pointer-events:none;
+        background:linear-gradient(115deg, transparent 32%, rgba(255,255,255,.5) 50%, transparent 68%);
+        transform:translateX(-130%); animation:barShine 3.6s ease-in-out infinite;
+      }
+      @keyframes barShine{ 0%,55%{ transform:translateX(-130%) } 92%,100%{ transform:translateX(130%) } }
       .bar-fill{
         height:100%; width:0%;
         background:repeating-linear-gradient(45deg,var(--orange) 0 16px,#FF9D57 16px 32px);
         border-radius:999px; transition:width .9s cubic-bezier(.22,1,.36,1);
+        animation:stripesMove 1.1s linear infinite;
       }
+      @keyframes stripesMove{ from{ background-position:0 0 } to{ background-position:45.25px 0 } }
       .bar-line{ text-align:center; font-weight:800; margin-top:10px; font-size:.98rem; }
       .bar-line .sisa{ color:var(--ink-soft); font-weight:700; font-size:.86rem; display:block; margin-top:2px; }
       .target-hint{
@@ -197,19 +229,25 @@
       /* TOP SAVER perk (Opsi 3): golden throne + laurel + diagonal ribbon, leader only */
       .person.leader{ border-color:#E7B93C; box-shadow:0 6px 14px rgba(217,148,30,.28), inset 0 0 0 2px rgba(246,196,83,.45); }
       .ribbon{
-        position:absolute; top:15px; right:-44px; z-index:5; display:none;
+        position:absolute; top:15px; right:-44px; z-index:5; display:none; overflow:hidden;
         transform:rotate(38deg); white-space:nowrap;
         background:linear-gradient(90deg,#C0392B,#D94F30 45%,#E8A13A);
         color:#fff; font-family:"Baloo 2",cursive; font-weight:800; font-size:.68rem; letter-spacing:1.6px;
         padding:4px 46px; box-shadow:0 2px 5px rgba(120,40,10,.28);
       }
+      .ribbon::after{
+        content:""; position:absolute; top:0; bottom:0; width:34%;
+        background:linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent);
+        transform:translateX(-180%) skewX(-18deg); animation:ribbonShine 2.9s ease-in-out infinite;
+      }
+      @keyframes ribbonShine{ 0%,55%{ transform:translateX(-180%) skewX(-18deg) } 100%{ transform:translateX(420%) skewX(-18deg) } }
       .person.leader .ribbon{ display:block; }
       .mascot-stage{ position:relative; width:104px; height:104px; margin:0 auto; }
       .throne{ position:absolute; inset:0; width:100%; height:100%; display:none; z-index:0; }
       .person.leader .throne{ display:block; }
       .person .card-mascot{ position:absolute; left:16px; top:16px; width:72px; height:72px; z-index:2; animation:idleBob 2.6s ease-in-out infinite; }
       .person.pink .card-mascot{ animation-delay:-1.3s; }
-      @keyframes idleBob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+      @keyframes idleBob{ 0%,100%{ transform:translateY(0) rotate(-2deg) } 50%{ transform:translateY(-5px) rotate(2deg) } }
       .sparkles{ position:absolute; inset:0; z-index:3; display:none; pointer-events:none; }
       .person.leader .sparkles{ display:block; }
       .sparkles i{ position:absolute; font-style:normal; color:#F0A92E; text-shadow:0 0 6px rgba(255,200,60,.85); animation:sparkleFloat 2.8s ease-in-out infinite; }
@@ -248,7 +286,10 @@
       .br-pct{ font-family:"Baloo 2",cursive; font-weight:800; font-size:1.45rem; color:var(--orange-deep); line-height:1; white-space:nowrap; }
       .br-sub{ font-size:.80rem; font-weight:700; color:var(--ink-soft); margin-top:2px; line-height:1.35; }
       .br-bar{ height:10px; background:rgba(255,255,255,.85); border-radius:999px; overflow:hidden; margin-top:8px; }
-      .br-fill{ height:100%; background:var(--orange-deep); border-radius:999px; transition:width .7s cubic-bezier(.22,1,.36,1); min-width:0; }
+      .br-fill{ height:100%; border-radius:999px; transition:width .8s cubic-bezier(.22,1,.36,1); min-width:0;
+        background:linear-gradient(90deg, var(--orange-deep) 0%, #FFB066 50%, var(--orange-deep) 100%);
+        background-size:200% 100%; animation:brShimmer 2.4s linear infinite; }
+      @keyframes brShimmer{ from{ background-position:0 0 } to{ background-position:-200% 0 } }
 
       /* ---------- Nabung button ---------- */
       .nabung-bar{
@@ -263,7 +304,9 @@
         color:#fff; font-family:"Baloo 2",cursive; font-weight:800; font-size:1.35rem;
         box-shadow:0 6px 0 #D3541A, 0 16px 26px rgba(242,109,29,.35);
         transition:transform .08s ease, box-shadow .08s ease; min-height:3.6rem;
+        animation:btnPulse 2.4s ease-in-out infinite;
       }
+      @keyframes btnPulse{ 0%,100%{ box-shadow:0 6px 0 #D3541A, 0 16px 26px rgba(242,109,29,.35) } 50%{ box-shadow:0 6px 0 #D3541A, 0 18px 38px rgba(242,109,29,.6) } }
       .btn-nabung:active{ transform:translateY(4px) scale(.99); box-shadow:0 2px 0 #D3541A, 0 8px 16px rgba(242,109,29,.3); }
 
       /* ---------- History ---------- */
@@ -360,15 +403,34 @@
 
       .loading-note{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:.9rem; margin-top:14px; }
 
+      /* ---------- Entrance (static blocks rise in once, staggered) ---------- */
+      @keyframes riseIn{ from{ opacity:0; transform:translateY(16px) } to{ opacity:1; transform:translateY(0) } }
+      .goal-switcher{ animation:riseIn .5s cubic-bezier(.22,1,.36,1) .05s both; }
+      .card{ animation:riseIn .55s cubic-bezier(.22,1,.36,1) .1s both; }
+      .card.jar-zone{ animation-delay:.18s; }
+      .duo .person{ animation:riseIn .55s cubic-bezier(.22,1,.36,1) both; }
+      .duo .person.blue{ animation-delay:.26s; }
+      .duo .person.pink{ animation-delay:.34s; }
+      .sec-title, .pot-note, .breakdown-list, .hist, footer{ animation:riseIn .55s cubic-bezier(.22,1,.36,1) .42s both; }
+
       @media (prefers-reduced-motion: reduce){
-        .bob,.bob2{ animation:none; }
-        .bar-fill{ transition:none; }
-        .br-fill{ transition:none; }
+        /* Big/decorative motion is calmed, but the gentle character idle
+           animation the user asked for (bob, sway, blink) keeps running. */
+        .bar-fill{ transition:none; animation:none; }
+        .bar::after{ animation:none; display:none; }
+        .br-fill{ transition:none; animation:none; }
         .sheet{ animation:none; }
         .milestone.show{ animation:none; }
-        .person .card-mascot{ animation:none; }
         .sparkles i{ animation:none; }
-        #mascot .eye{ animation:none; }
+        #jarFill, #jarWave{ transition:none; }
+        #jarWave{ animation:none; }
+        .bubble{ animation:none; }
+        .btn-nabung{ animation:none; }
+        .ribbon::after{ animation:none; display:none; }
+        .float-star{ animation:none; }
+        .heart-beat{ animation:none; }
+        .goal-switcher, .card, .duo .person, .sec-title, .pot-note, .breakdown-list, .hist, footer{ animation:none; }
+        .pct-big.pop{ animation:none; }
       }
     </style>
   </head>
@@ -434,11 +496,13 @@
           <!-- joined hands -->
           <circle cx="130" cy="86" r="8" fill="#FF9A44" stroke="#F27B21" stroke-width="2.5"/>
           <path d="M124 82c2 2 4 2 6 0M130 90c2-2 4-2 6 0" stroke="#F27B21" stroke-width="1.6" fill="none" stroke-linecap="round"/>
-          <path d="M130 66c-2.2-2.8-6-1.5-6 1.4 0 2.6 3 4.3 6 6.1 3-1.8 6-3.5 6-6.1 0-2.9-3.8-4.2-6-1.4z" fill="#EF6FA5"/>
+          <path class="heart-beat" d="M130 66c-2.2-2.8-6-1.5-6 1.4 0 2.6 3 4.3 6 6.1 3-1.8 6-3.5 6-6.1 0-2.9-3.8-4.2-6-1.4z" fill="#EF6FA5"/>
           <g class="bob2">
             <use href="#mascot" x="140" y="8" width="112" height="112" style="--ribbon:#EF6FA5"/>
           </g>
         </svg>
+        <span class="float-star s1">✦</span>
+        <span class="float-star s2">✧</span>
       </div>
 
       <h1 class="title">Limoon Pocket</h1>
@@ -469,14 +533,20 @@
               <rect x="0" y="226" width="200" height="0" id="jarFill" fill="#FF9A44"/>
               <ellipse id="jarWave" cx="100" cy="226" rx="86" ry="9" fill="#FFB877"/>
               <g id="jarSlices" opacity=".9"></g>
+              <g id="jarBubbles" opacity="0" fill="#FFE9CF">
+                <circle class="bubble b1" cx="72" cy="218" r="5"/>
+                <circle class="bubble b2" cx="104" cy="222" r="3.4"/>
+                <circle class="bubble b3" cx="134" cy="214" r="4.4"/>
+                <circle class="bubble b4" cx="90" cy="224" r="2.8"/>
+              </g>
             </g>
             <!-- glass -->
             <path d="M42 62 h116 v18 c10 8 14 18 14 32 v88 a26 26 0 0 1 -26 26 H54 a26 26 0 0 1 -26 -26 v-88 c0-14 4-24 14-32 z"
                   fill="rgba(255,255,255,.14)" stroke="#E8B98A" stroke-width="4"/>
             <path d="M46 96 q-6 40 0 84" stroke="rgba(255,255,255,.75)" stroke-width="7" fill="none" stroke-linecap="round"/>
             <!-- jar face -->
-            <path d="M74 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
-            <path d="M112 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path class="jar-eye" d="M74 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
+            <path class="jar-eye" d="M112 118 q7-8 14 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
             <path d="M92 132 q8 7 16 0" stroke="#7A4A21" stroke-width="4" fill="none" stroke-linecap="round"/>
             <circle cx="66" cy="130" r="7" fill="#FF9FB0" opacity=".8"/>
             <circle cx="134" cy="130" r="7" fill="#FF9FB0" opacity=".8"/>
@@ -849,6 +919,27 @@
         }
         function fmtPct(p){ return p===null ? "—" : (Math.round(p*10)/10).toString().replace(".", ",") + "%"; }
 
+        /* Animated count-up for the big numbers: eases from the last shown
+           value to the new one so totals visibly tick up/down on every sync. */
+        var animVals = {};
+        function countUp(el, key, to, fmt){
+          if (!el) return;
+          var from = (key in animVals) ? animVals[key] : 0;
+          animVals[key] = to;
+          if (el._cu) cancelAnimationFrame(el._cu);
+          if (reduceMotion || from === to){ el.textContent = fmt(to); return; }
+          var start = null, dur = 750;
+          function step(ts){
+            if (!start) start = ts;
+            var p = Math.min(1, (ts - start) / dur);
+            var eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = fmt(from + (to - from) * eased);
+            if (p < 1) el._cu = requestAnimationFrame(step);
+            else el.textContent = fmt(to);
+          }
+          el._cu = requestAnimationFrame(step);
+        }
+
         function goalIcon(name){
           var n = (name || "").toLowerCase();
           if (n.indexOf("libur") !== -1 || n.indexOf("jalan") !== -1 || n.indexOf("travel") !== -1) return "🧳";
@@ -932,7 +1023,15 @@
             var fillEl = document.createElement("span");
             fillEl.className = "br-fill";
             fillEl.style.display = "block";
-            fillEl.style.width = pct + "%";
+            if (reduceMotion){
+              fillEl.style.width = pct + "%";
+            } else {
+              // Grow from zero on every render so progress visibly animates in
+              fillEl.style.width = "0%";
+              (function(el, w){
+                requestAnimationFrame(function(){ requestAnimationFrame(function(){ el.style.width = w; }); });
+              })(fillEl, pct + "%");
+            }
             bar.appendChild(fillEl);
             main.appendChild(bar);
 
@@ -993,7 +1092,7 @@
           renderGoalSwitcher();
           $("histTitle").textContent = "Riwayat Nabung 📒";
           $("goalName").textContent = "Total Semua Tujuan";
-          $("totalBig").textContent = rp(allT.all);
+          countUp($("totalBig"), "totalAll", allT.all, rp);
           var subEl = $("totalSub");
           if (subEl) subEl.textContent = hasCombinedTarget ? ("dari " + rp(combinedTarget) + " target gabungan • " + goalCount + (goalCount === 1 ? " tujuan" : " tujuan")) : (goalCount + (goalCount === 1 ? " tujuan" : " tujuan") + " • target gabungan belum diatur");
           $("totalLabel").textContent = "TOTAL TERKUMPUL — SEMUA TUJUAN";
@@ -1020,6 +1119,8 @@
           var wave = $("jarWave");
           wave.setAttribute("cy", fillTop);
           wave.setAttribute("opacity", fillH > 2 ? "1" : "0");
+          var bubblesEl = $("jarBubbles");
+          if (bubblesEl) bubblesEl.setAttribute("opacity", fillH > 30 ? "1" : "0");
           // decorative slices inside the fill
           var slices = $("jarSlices");
           slices.innerHTML = "";
@@ -1038,7 +1139,14 @@
           }
 
           if (hasCombinedTarget){
-            $("pctBig").textContent = (Math.round(cPct * 10) / 10).toString().replace(".", ",") + "%";
+            var prevShownPct = animVals["pct"];
+            countUp($("pctBig"), "pct", cPct, function(v){ return (Math.round(v * 10) / 10).toString().replace(".", ",") + "%"; });
+            if (!reduceMotion && typeof prevShownPct === "number" && Math.abs(prevShownPct - cPct) >= 0.05){
+              var pb = $("pctBig");
+              pb.classList.remove("pop");
+              void pb.offsetWidth;
+              pb.classList.add("pop");
+            }
             $("barWrap").style.display = "";
             $("barFill").style.width = cPct + "%";
             $("targetHint").style.display = "none";
@@ -1047,6 +1155,7 @@
               (sisa > 0 ? '<span class="sisa">Kurang ' + rp(sisa) + " lagi buat sampai semua tujuan 💪</span>"
                         : '<span class="sisa">Semua targetnya udah kesampaian! 🥳</span>');
           } else {
+            animVals["pct"] = 0;
             $("pctBig").textContent = "0%";
             $("barWrap").style.display = "";
             $("barFill").style.width = "0%";
@@ -1055,8 +1164,8 @@
           }
 
           // Contributor cards are COMBINED across all goals
-          $("totalBlue").textContent = rp(allT.blue);
-          $("totalPink").textContent = rp(allT.pink);
+          countUp($("totalBlue"), "totalBlue", allT.blue, rp);
+          countUp($("totalPink"), "totalPink", allT.pink, rp);
           $("shareBlue").textContent = (allT.all > 0 ? Math.round(allT.blue / allT.all * 100) : 0) + "% dari total gabungan";
           $("sharePink").textContent = (allT.all > 0 ? Math.round(allT.pink / allT.all * 100) : 0) + "% dari total gabungan";
 
