@@ -85,6 +85,46 @@
       }
       .goal-sub{ text-align:center; color:var(--ink-soft); font-weight:700; font-size:.86rem; margin:2px 0 0; }
 
+      /* ---------- Goal switcher ---------- */
+      .goal-switcher{ display:flex; gap:8px; overflow-x:auto; padding:12px 2px 4px; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+      .goal-switcher::-webkit-scrollbar{ display:none; }
+      .goal-chip{
+        flex:none; display:inline-flex; align-items:center; gap:8px;
+        background:#fff; border:2px solid var(--line); border-radius:999px;
+        padding:7px 12px 7px 8px; font-weight:800; font-size:.88rem; color:var(--ink);
+        max-width:210px;
+      }
+      .goal-chip .gname{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:120px; }
+      .goal-chip .gpct{
+        flex:none; min-width:42px; height:26px; padding:0 7px; border-radius:999px;
+        background:var(--orange-pale); color:var(--orange-deep); display:inline-flex; align-items:center; justify-content:center;
+        font-family:"Baloo 2",cursive; font-size:.82rem; font-weight:800; border:1.5px solid var(--line);
+      }
+      .goal-chip.active{ background:linear-gradient(180deg,#FFF1DE,#FFE3C2); border-color:var(--orange); box-shadow:0 3px 0 rgba(242,109,29,.25); }
+      .goal-chip.active .gpct{ background:var(--orange); color:#fff; border-color:var(--orange-deep); }
+      .goal-chip.add{ border-style:dashed; color:var(--orange-deep); background:#FFF9F1; padding:7px 14px; }
+      .total-all{
+        margin-top:12px; background:#FFF9F1; border:2px dashed #F3C48A; border-radius:16px;
+        padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+      }
+      .total-all .ta-label{ font-weight:800; font-size:.85rem; color:var(--ink-soft); }
+      .total-all .ta-label b{ color:var(--ink); display:block; font-size:.92rem; }
+      .total-all .ta-val{ font-family:"Baloo 2",cursive; font-weight:800; color:var(--orange-deep); font-size:1.15rem; white-space:nowrap; }
+      select.goal-select{
+        width:100%; border:2px solid var(--line); border-radius:14px; background:#fff;
+        padding:12px 14px; font-size:1rem; font-weight:700; color:var(--ink); outline:none;
+      }
+      select.goal-select:focus{ border-color:var(--orange); }
+      .btn-danger-outline{
+        width:100%; margin-top:18px; border:2px solid #F3B3AE; background:#FFF1F0; color:var(--danger);
+        border-radius:999px; padding:12px; font-weight:800; min-height:3rem;
+      }
+      .btn-add-goal{
+        width:100%; margin-top:12px; border:2px dashed var(--orange); background:var(--orange-pale); color:var(--orange-deep);
+        border-radius:999px; padding:12px; font-weight:800; min-height:3rem; font-family:"Baloo 2",cursive; font-size:1rem;
+      }
+      .row .gtag{ display:inline-block; margin-top:2px; font-size:.7rem; font-weight:800; background:var(--orange-pale); color:var(--orange-deep); border:1px solid var(--line); padding:1px 7px; border-radius:999px; }
+
       /* ---------- Cards ---------- */
       .card{
         background:var(--card); border:2px solid var(--line); border-radius:var(--radius);
@@ -339,9 +379,15 @@
       <p class="goal-name" id="goalName">Tabungan Bersama</p>
       <p class="goal-sub">tabungan bareng syahrullian &amp; prisqola 🍊</p>
 
+      <div class="goal-switcher" id="goalSwitcher" aria-label="Pilih tujuan tabungan"></div>
+
       <div class="card">
-        <div class="total-label">TOTAL TERKUMPUL</div>
+        <div class="total-label" id="totalLabel">TOTAL TERKUMPUL — TUJUAN INI</div>
         <div class="total-big" id="totalBig">Rp 0</div>
+        <div class="total-all" id="totalAllBox">
+          <div class="ta-label">Total Semua Tujuan<b id="totalAllCount">1 tujuan aktif</b></div>
+          <div class="ta-val" id="totalAllVal">Rp 0</div>
+        </div>
       </div>
 
       <div class="card jar-zone">
@@ -397,7 +443,7 @@
         </div>
       </div>
 
-      <h2 class="sec-title">Riwayat Nabung 📒</h2>
+      <h2 class="sec-title" id="histTitle">Riwayat Nabung 📒</h2>
       <div class="hist" id="histList"></div>
       <p class="loading-note" id="loadingNote">Lagi ngambil data celengan dari awan… ☁️</p>
 
@@ -418,7 +464,9 @@
       <div class="sheet">
         <h2 id="nabungTitle">Nabung dulu yuk! 🍊</h2>
         <p class="sub">Catat setoran yang baru masuk ke e-wallet kalian.</p>
-        <label class="flabel" style="margin-top:0">Siapa yang nabung?</label>
+        <label class="flabel" for="nabungGoalSelect" style="margin-top:0">Buat tujuan apa?</label>
+        <select id="nabungGoalSelect" class="goal-select"></select>
+        <label class="flabel">Siapa yang nabung?</label>
         <div class="who-toggle">
           <button type="button" class="who-opt sel-blue" id="whoBlue" data-who="syahrullian">
             <svg style="--ribbon:#4A90D9" aria-hidden="true"><use href="#mascot"/></svg>
@@ -454,10 +502,10 @@
     <div class="overlay" id="settingsOverlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
       <div class="sheet">
         <h2 id="settingsTitle">Pengaturan ⚙️</h2>
-        <p class="sub">Nama tujuan &amp; target tabungan kalian berdua.</p>
-        <label class="flabel" for="goalInput" style="margin-top:0">Nama tujuan</label>
+        <p class="sub">Pengaturan untuk tujuan yang lagi aktif. Ganti tujuan lewat chip di halaman utama ya.</p>
+        <label class="flabel" for="goalInput" style="margin-top:0">Nama tujuan aktif</label>
         <input type="text" id="goalInput" placeholder="mis. Liburan Berdua" maxlength="60" />
-        <label class="flabel" for="targetInput">Target (Rp)</label>
+        <label class="flabel" for="targetInput">Target tujuan ini (Rp)</label>
         <div class="money-wrap">
           <span>Rp</span>
           <input type="text" inputmode="numeric" id="targetInput" placeholder="0" autocomplete="off" />
@@ -466,6 +514,41 @@
         <div class="sheet-actions">
           <button type="button" class="btn-cancel" data-close="settingsOverlay">Batal</button>
           <button type="button" class="btn-save" id="btnSaveSettings">Simpan</button>
+        </div>
+        <button type="button" class="btn-add-goal" id="btnOpenAddGoalFromSettings">+ Tambah Tujuan Baru 🍊</button>
+        <button type="button" class="btn-danger-outline" id="btnOpenDeleteGoal">🗑️ Hapus Tujuan Aktif Ini</button>
+        <p class="sub" style="margin-top:10px; margin-bottom:0">Menghapus tujuan juga menghapus semua riwayat nabung di tujuan itu.</p>
+      </div>
+    </div>
+
+    <!-- Add goal sheet -->
+    <div class="overlay" id="addGoalOverlay" role="dialog" aria-modal="true" aria-labelledby="addGoalTitle">
+      <div class="sheet">
+        <h2 id="addGoalTitle">Tujuan Baru 🍊</h2>
+        <p class="sub">Bikin tujuan nabung baru, toplesnya terpisah dari tujuan lain.</p>
+        <label class="flabel" for="newGoalName" style="margin-top:0">Nama tujuan</label>
+        <input type="text" id="newGoalName" placeholder="mis. Dana Nikah, Liburan, Darurat…" maxlength="60" />
+        <label class="flabel" for="newGoalTarget">Target (Rp)</label>
+        <div class="money-wrap">
+          <span>Rp</span>
+          <input type="text" inputmode="numeric" id="newGoalTarget" placeholder="0" autocomplete="off" />
+        </div>
+        <p class="form-err" id="addGoalErr"></p>
+        <div class="sheet-actions">
+          <button type="button" class="btn-cancel" data-close="addGoalOverlay">Batal</button>
+          <button type="button" class="btn-save" id="btnSaveAddGoal">Buat Tujuan 🍊</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete goal confirm sheet -->
+    <div class="overlay" id="delGoalOverlay" role="dialog" aria-modal="true" aria-labelledby="delGoalTitle">
+      <div class="sheet">
+        <h2 id="delGoalTitle">Hapus tujuan ini? 🗑️</h2>
+        <p class="sub" id="delGoalDesc">Tujuan dan semua riwayatnya bakal hilang.</p>
+        <div class="sheet-actions">
+          <button type="button" class="btn-cancel" data-close="delGoalOverlay">Nggak jadi</button>
+          <button type="button" class="btn-save" id="btnConfirmDelGoal" style="background:linear-gradient(180deg,#E87A72,#D9534A); box-shadow:0 4px 0 #A93A33">Iya, hapus tujuan</button>
         </div>
       </div>
     </div>
@@ -508,14 +591,53 @@
         var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
         var state = {
-          goalName: "Tabungan Bersama",
-          target: 0,
-          entries: {},        // id -> entry
-          prevPct: null,      // percentage before the latest snapshot (for milestone crossing)
+          goals: {},          // goalId -> { name, target, createdAt }
+          activeGoalId: null,
+          entries: {},        // id -> entry { who, amount, note, ts, goalId }
+          prevPctByGoal: {},  // goalId -> last pct (for milestone crossing)
+          prevActiveId: null,
           loaded: false,
           who: "syahrullian",
-          delId: null
+          delId: null,
+          migrating: false
         };
+
+        function activeGoal(){
+          if (state.activeGoalId && state.goals[state.activeGoalId]) return state.goals[state.activeGoalId];
+          var ids = Object.keys(state.goals);
+          if (ids.length) return state.goals[ids[0]];
+          return { name: "Tabungan Bersama", target: 0, createdAt: 0 };
+        }
+        function activeGoalName(){ return activeGoal().name || "Tabungan Bersama"; }
+        function activeTarget(){ return activeGoal().target || 0; }
+        function goalIdsSorted(){
+          return Object.keys(state.goals).sort(function(a,b){
+            return ((state.goals[a].createdAt||0) - (state.goals[b].createdAt||0)) || a.localeCompare(b);
+          });
+        }
+        function entriesForGoal(gid){
+          var out = {};
+          Object.keys(state.entries).forEach(function(id){
+            var e = state.entries[id];
+            if (e && e.goalId === gid) out[id] = e;
+          });
+          return out;
+        }
+        function sumEntries(map){
+          var blue=0, pink=0;
+          Object.keys(map).forEach(function(id){
+            var e = map[id];
+            if (!e || typeof e.amount !== "number") return;
+            if (e.who === "prisqola") pink += e.amount; else blue += e.amount;
+          });
+          return { blue: blue, pink: pink, all: blue+pink };
+        }
+        function pctForGoal(gid){
+          var g = state.goals[gid];
+          if (!g || !(g.target>0)) return null;
+          var t = sumEntries(entriesForGoal(gid));
+          return Math.min(100, (t.all / g.target) * 100);
+        }
 
         /* ---------- Toast ---------- */
         var toastTimer = null;
@@ -573,24 +695,81 @@
         }
 
         /* ---------- Rendering ---------- */
-        function totals(){
-          var blue = 0, pink = 0;
+        function totals(){ return sumEntries(entriesForGoal(state.activeGoalId)); }
+        function totalsAll(){
+          var blue=0, pink=0, all=0;
           Object.keys(state.entries).forEach(function(id){
             var e = state.entries[id];
             if (!e || typeof e.amount !== "number") return;
+            all += e.amount;
             if (e.who === "prisqola") pink += e.amount; else blue += e.amount;
           });
-          return { blue: blue, pink: pink, all: blue + pink };
+          return { blue: blue, pink: pink, all: all };
+        }
+        function fmtPct(p){ return p===null ? "—" : (Math.round(p*10)/10).toString().replace(".", ",") + "%"; }
+
+        function renderGoalSwitcher(){
+          var wrap = $("goalSwitcher");
+          wrap.innerHTML = "";
+          var ids = goalIdsSorted();
+          ids.forEach(function(gid){
+            var g = state.goals[gid];
+            var pct = pctForGoal(gid);
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = "goal-chip" + (gid === state.activeGoalId ? " active" : "");
+            var pctEl = document.createElement("span");
+            pctEl.className = "gpct";
+            pctEl.textContent = fmtPct(pct);
+            var nameEl = document.createElement("span");
+            nameEl.className = "gname";
+            nameEl.textContent = g.name || "Tabungan Bersama";
+            btn.appendChild(pctEl);
+            btn.appendChild(nameEl);
+            btn.addEventListener("click", function(){
+              if (gid === state.activeGoalId) return;
+              if (ref) ref.update({ activeGoalId: gid }).catch(function(){ toast("Gagal ganti tujuan 🙏"); });
+              else { state.activeGoalId = gid; render(); }
+            });
+            wrap.appendChild(btn);
+          });
+          var add = document.createElement("button");
+          add.type = "button";
+          add.className = "goal-chip add";
+          add.textContent = "+ Tujuan";
+          add.addEventListener("click", function(){ openAddGoal(); });
+          wrap.appendChild(add);
+          // sync nabung selector
+          var sel = $("nabungGoalSelect");
+          if (sel){
+            var cur = sel.value;
+            sel.innerHTML = "";
+            ids.forEach(function(gid){
+              var opt = document.createElement("option");
+              opt.value = gid;
+              opt.textContent = state.goals[gid].name || "Tabungan Bersama";
+              sel.appendChild(opt);
+            });
+            if (cur && state.goals[cur]) sel.value = cur;
+            else if (state.activeGoalId) sel.value = state.activeGoalId;
+          }
         }
 
         function render(){
           var t = totals();
-          var target = state.target || 0;
+          var target = activeTarget();
           var hasTarget = target > 0;
           var pct = hasTarget ? Math.min(100, (t.all / target) * 100) : null;
+          var allT = totalsAll();
+          var goalCount = Object.keys(state.goals).length || 1;
 
-          $("goalName").textContent = state.goalName || "Tabungan Bersama";
+          renderGoalSwitcher();
+          $("histTitle").textContent = "Riwayat Nabung — " + activeGoalName() + " 📒";
+          $("goalName").textContent = activeGoalName();
           $("totalBig").textContent = rp(t.all);
+          $("totalAllVal").textContent = rp(allT.all);
+          $("totalAllCount").textContent = goalCount + (goalCount === 1 ? " tujuan" : " tujuan") + " • gabungan semua";
+          $("totalLabel").textContent = "TOTAL TERKUMPUL — " + (activeGoalName() || "TUJUAN INI").toUpperCase();
 
           // Jar fill: inner area y from 226 (bottom) up to 84 (top) => height 142
           var fillH = pct === null ? 0 : (pct / 100) * 142;
@@ -647,13 +826,14 @@
         function renderHistory(){
           var list = $("histList");
           list.innerHTML = "";
-          var ids = Object.keys(state.entries).sort(function(a, b){
-            return (state.entries[b].ts || 0) - (state.entries[a].ts || 0);
+          var activeEntries = entriesForGoal(state.activeGoalId);
+          var ids = Object.keys(activeEntries).sort(function(a, b){
+            return (activeEntries[b].ts || 0) - (activeEntries[a].ts || 0);
           });
           if (!ids.length){
             var empty = document.createElement("div");
             empty.className = "empty";
-            empty.textContent = "Masih kosong 🍊 Setoran pertama kalian bakal muncul di sini.";
+            empty.textContent = "Masih kosong buat tujuan “" + activeGoalName() + "” 🍊 Setoran pertama buat tujuan ini bakal muncul di sini.";
             list.appendChild(empty);
             return;
           }
@@ -675,6 +855,10 @@
             who.className = "who " + (isPink ? "pink" : "blue");
             who.textContent = isPink ? "prisqola" : "syahrullian";
             mid.appendChild(who);
+            var gtag = document.createElement("span");
+            gtag.className = "gtag";
+            gtag.textContent = activeGoalName();
+            mid.appendChild(gtag);
             if (e.note){
               var note = document.createElement("div");
               note.className = "note";
@@ -707,14 +891,18 @@
         /* ---------- Milestones ---------- */
         function checkMilestones(pct){
           var banner = $("milestone");
-          if (pct === null){ banner.className = "milestone"; return; }
+          var gid = state.activeGoalId;
+          if (pct === null){ banner.className = "milestone"; if (gid) state.prevPctByGoal[gid] = null; return; }
           if (pct >= 100){
-            banner.textContent = "TUJUAN TERCAPAI! 🎉🍊 Kalian berdua luar biasa!";
+            banner.textContent = "TUJUAN TERCAPAI! 🎉🍊 “" + activeGoalName() + "” kesampaian — kalian berdua luar biasa!";
             banner.className = "milestone show done";
           }
-          if (!state.loaded){ state.prevPct = pct; return; }
-          var prev = state.prevPct;
-          state.prevPct = pct;
+          if (!state.loaded){ if (gid) state.prevPctByGoal[gid] = pct; return; }
+          // if active goal just switched, don't celebrate old goal's crossing
+          if (state.prevActiveId && state.prevActiveId !== gid){ if (gid) state.prevPctByGoal[gid] = pct; state.prevActiveId = gid; return; }
+          state.prevActiveId = gid;
+          var prev = gid ? state.prevPctByGoal[gid] : null;
+          if (gid) state.prevPctByGoal[gid] = pct;
           if (prev === null || prev === undefined) return;
           var steps = [25, 50, 75, 100];
           for (var i = 0; i < steps.length; i++){
@@ -756,6 +944,7 @@
         }
         attachMoneyFormat($("amountInput"));
         attachMoneyFormat($("targetInput"));
+        attachMoneyFormat($("newGoalTarget"));
         function moneyVal(input){
           var d = digitsOnly(input.value);
           return d ? parseInt(d, 10) : 0;
@@ -812,31 +1001,98 @@
 
           ref.on("value", function(snap){
             var val = snap.val();
-            if (val === null){
-              // First run: seed the shared pot.
-              ref.set({ goalName: "Tabungan Bersama", target: 0, entries: {} }).catch(function(){});
-              state.goalName = "Tabungan Bersama";
-              state.target = 0;
-              state.entries = {};
-            } else {
-              state.goalName = typeof val.goalName === "string" && val.goalName ? val.goalName : "Tabungan Bersama";
-              state.target = typeof val.target === "number" ? val.target : 0;
+            // --- Empty: seed one default goal ---
+            if (val === null || (typeof val === "object" && Object.keys(val).length === 0)){
+              if (!state.migrating){
+                state.migrating = true;
+                var newId0 = ref.child("goals").push().key;
+                var seedGoals = {}; seedGoals[newId0] = { name: "Tabungan Bersama", target: 0, createdAt: Date.now() };
+                ref.set({ goals: seedGoals, activeGoalId: newId0, entries: {} }).then(function(){ state.migrating = false; }).catch(function(){ state.migrating = false; });
+              }
+              state.goals = {}; state.activeGoalId = null; state.entries = {};
+              var firstLoad0 = !state.loaded;
+              state.loaded = true;
+              $("loadingNote").style.display = "none";
+              render();
+              return;
+            }
+            // --- Migration: old shape { goalName, target, entries } without goals ---
+            var hasOld = (typeof val.goalName !== "undefined" || typeof val.target !== "undefined");
+            if (!val.goals && hasOld){
+              var entriesOld = val.entries || {};
+              // set local state optimistically from old data
+              var migId = ref.child("goals").push().key;
+              var migGoals = {}; migGoals[migId] = { name: (typeof val.goalName === "string" && val.goalName) ? val.goalName : "Tabungan Bersama", target: (typeof val.target === "number" ? val.target : 0), createdAt: Date.now() };
+              var migEntries = {};
+              Object.keys(entriesOld).forEach(function(eid){
+                var e = entriesOld[eid] || {};
+                migEntries[eid] = { who: e.who, amount: e.amount, note: e.note || "", ts: e.ts || 0, goalId: e.goalId || migId };
+              });
+              state.goals = migGoals; state.activeGoalId = migId; state.entries = migEntries;
+              if (!state.migrating){
+                state.migrating = true;
+                // Write new shape and remove old top-level fields
+                var payload = { goals: migGoals, activeGoalId: migId, entries: migEntries, goalName: null, target: null };
+                ref.update(payload).then(function(){ state.migrating = false; }).catch(function(){ state.migrating = false; });
+              }
+              var firstLoadM = !state.loaded;
+              state.loaded = true;
+              $("loadingNote").style.display = "none";
+              render();
+              if (firstLoadM && migId) state.prevPctByGoal[migId] = pctForGoal(migId);
+              state.prevActiveId = state.activeGoalId;
+              return;
+            }
+            // --- Also stamp any entries missing goalId (safety, e.g. partial migration) ---
+            if (val.goals){
+              state.goals = val.goals || {};
+              var ids = goalIdsSorted();
+              state.activeGoalId = (val.activeGoalId && val.goals[val.activeGoalId]) ? val.activeGoalId : (ids[0] || null);
               state.entries = val.entries || {};
+              // If some entries lack goalId, stamp them with first goal once
+              var needsStamp = Object.keys(state.entries).some(function(eid){ return !state.entries[eid].goalId; });
+              if (needsStamp && state.activeGoalId && !state.migrating){
+                state.migrating = true;
+                var updates = {};
+                Object.keys(state.entries).forEach(function(eid){
+                  if (!state.entries[eid].goalId) updates["entries/" + eid + "/goalId"] = state.activeGoalId;
+                });
+                ref.update(updates).then(function(){ state.migrating = false; }).catch(function(){ state.migrating = false; });
+              }
+            } else {
+              // goals missing but no old fields (edge) — treat as empty goals
+              state.goals = {}; state.activeGoalId = null; state.entries = val.entries || {};
             }
             var firstLoad = !state.loaded;
             state.loaded = true;
             $("loadingNote").style.display = "none";
             render();
-            if (firstLoad) state.prevPct = (state.target > 0) ? Math.min(100, totals().all / state.target * 100) : null;
+            if (firstLoad){
+              goalIdsSorted().forEach(function(gid){ state.prevPctByGoal[gid] = pctForGoal(gid); });
+              state.prevActiveId = state.activeGoalId;
+            }
           }, function(){
             setConn("off", "Belum bisa tersambung — cek internet ya");
             $("loadingNote").textContent = "Hmm, datanya belum bisa diambil dari awan. Pastikan internet nyala, nanti halaman ini nyambung sendiri kok 🍊";
           });
         }
 
+        /* ---------- Add / Delete goal helpers ---------- */
+        function openAddGoal(){
+          $("newGoalName").value = "";
+          $("newGoalTarget").value = "";
+          $("addGoalErr").classList.remove("show");
+          openSheet("addGoalOverlay");
+          setTimeout(function(){ $("newGoalName").focus(); }, 250);
+        }
+        // expose for switcher (defined before render uses it via closure — hoisted function declaration works)
+
         /* ---------- Actions ---------- */
         $("btnNabung").addEventListener("click", function(){
           $("nabungErr").classList.remove("show");
+          // default selector to active goal
+          var sel = $("nabungGoalSelect");
+          if (sel && state.activeGoalId) sel.value = state.activeGoalId;
           openSheet("nabungOverlay");
           setTimeout(function(){ $("amountInput").focus(); }, 250);
         });
@@ -846,15 +1102,22 @@
           var amount = moneyVal($("amountInput"));
           if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
           if (!amount || amount <= 0){ err.textContent = "Isi dulu jumlahnya ya, minimal Rp 1 🍊"; err.classList.add("show"); return; }
+          var chosenGoal = ($("nabungGoalSelect") && $("nabungGoalSelect").value) ? $("nabungGoalSelect").value : state.activeGoalId;
+          if (!chosenGoal || !state.goals[chosenGoal]){ err.textContent = "Pilih dulu tujuannya ya 🍊"; err.classList.add("show"); return; }
+          // If saving to a different goal than active, switch active so user sees it fill
+          var shouldSwitch = chosenGoal !== state.activeGoalId;
           var btn = $("btnSaveNabung");
           btn.disabled = true;
           btn.textContent = "Menyimpan…";
-          ref.child("entries").push({
+          var pushPromise = ref.child("entries").push({
             who: state.who,
             amount: amount,
             note: $("noteInput").value.trim(),
-            ts: Date.now()
-          }).then(function(){
+            ts: Date.now(),
+            goalId: chosenGoal
+          });
+          if (shouldSwitch) pushPromise = pushPromise.then(function(){ return ref.update({ activeGoalId: chosenGoal }); });
+          pushPromise.then(function(){
             btn.disabled = false;
             btn.textContent = "Simpan 🍊";
             $("amountInput").value = "";
@@ -873,27 +1136,99 @@
         });
 
         $("btnSettings").addEventListener("click", function(){
-          $("goalInput").value = state.goalName || "";
-          $("targetInput").value = state.target > 0 ? rpFmt.format(state.target) : "";
+          $("goalInput").value = activeGoalName() || "";
+          var at = activeTarget();
+          $("targetInput").value = at > 0 ? rpFmt.format(at) : "";
           $("settingsErr").classList.remove("show");
           openSheet("settingsOverlay");
         });
 
         $("btnSaveSettings").addEventListener("click", function(){
           var err = $("settingsErr");
-          if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
+          if (!ref || !state.activeGoalId){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
           var name = $("goalInput").value.trim() || "Tabungan Bersama";
           var target = moneyVal($("targetInput"));
           var btn = $("btnSaveSettings");
           btn.disabled = true;
-          ref.update({ goalName: name, target: target }).then(function(){
+          var gid = state.activeGoalId;
+          var existing = state.goals[gid] || {};
+          ref.child("goals/" + gid).update({ name: name, target: target, createdAt: existing.createdAt || Date.now() }).then(function(){
             btn.disabled = false;
             closeSheet("settingsOverlay");
-            toast("Pengaturan disimpan ☁️");
+            toast("Pengaturan tujuan disimpan ☁️");
           }).catch(function(){
             btn.disabled = false;
             err.textContent = "Gagal nyimpan — koneksinya lagi putus. Coba lagi ya 🙏";
             err.classList.add("show");
+          });
+        });
+
+        $("btnOpenAddGoalFromSettings").addEventListener("click", function(){
+          closeSheet("settingsOverlay");
+          setTimeout(openAddGoal, 120);
+        });
+
+        $("btnSaveAddGoal").addEventListener("click", function(){
+          var err = $("addGoalErr");
+          if (!ref){ err.textContent = "Belum tersambung ke awan. Tunggu sebentar lalu coba lagi ya."; err.classList.add("show"); return; }
+          var name = $("newGoalName").value.trim();
+          if (!name){ err.textContent = "Isi dulu nama tujuannya ya 🍊"; err.classList.add("show"); return; }
+          var target = moneyVal($("newGoalTarget"));
+          var btn = $("btnSaveAddGoal");
+          btn.disabled = true;
+          btn.textContent = "Membuat…";
+          var newRef = ref.child("goals").push();
+          var newId = newRef.key;
+          newRef.set({ name: name, target: target, createdAt: Date.now() }).then(function(){
+            return ref.update({ activeGoalId: newId });
+          }).then(function(){
+            btn.disabled = false;
+            btn.textContent = "Buat Tujuan 🍊";
+            closeSheet("addGoalOverlay");
+            toast("Tujuan baru “" + name + "” dibuat 🍊");
+          }).catch(function(){
+            btn.disabled = false;
+            btn.textContent = "Buat Tujuan 🍊";
+            err.textContent = "Gagal bikin tujuan — coba lagi ya 🙏";
+            err.classList.add("show");
+          });
+        });
+
+        $("btnOpenDeleteGoal").addEventListener("click", function(){
+          var count = Object.keys(entriesForGoal(state.activeGoalId)).length;
+          $("delGoalDesc").textContent = "Hapus tujuan “" + activeGoalName() + "” beserta " + count + " catatan nabung di dalamnya? Ini nggak bisa dibalikin. Kalau ini tujuan terakhir, bakal dibuatkan tujuan kosong baru.";
+          closeSheet("settingsOverlay");
+          setTimeout(function(){ openSheet("delGoalOverlay"); }, 120);
+        });
+
+        $("btnConfirmDelGoal").addEventListener("click", function(){
+          if (!ref || !state.activeGoalId) return;
+          var btn = $("btnConfirmDelGoal");
+          btn.disabled = true;
+          var gidToDel = state.activeGoalId;
+          var remaining = goalIdsSorted().filter(function(id){ return id !== gidToDel; });
+          var updates = {};
+          updates["goals/" + gidToDel] = null;
+          Object.keys(state.entries).forEach(function(eid){
+            if (state.entries[eid].goalId === gidToDel) updates["entries/" + eid] = null;
+          });
+          var promise;
+          if (remaining.length === 0){
+            var newId = ref.child("goals").push().key;
+            updates["goals/" + newId] = { name: "Tabungan Bersama", target: 0, createdAt: Date.now() };
+            updates["activeGoalId"] = newId;
+            promise = ref.update(updates);
+          } else {
+            updates["activeGoalId"] = remaining[0];
+            promise = ref.update(updates);
+          }
+          promise.then(function(){
+            btn.disabled = false;
+            closeSheet("delGoalOverlay");
+            toast("Tujuan dihapus 🗑️");
+          }).catch(function(){
+            btn.disabled = false;
+            toast("Gagal menghapus tujuan — coba lagi ya 🙏");
           });
         });
 
